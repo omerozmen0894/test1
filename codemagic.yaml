@@ -9,6 +9,8 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      groups:
+        - code-signing
       vars:
         BUNDLE_ID: com.wrapmaze.game
         APP_NAME: Wrap Maze
