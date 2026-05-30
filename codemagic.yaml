@@ -40,13 +40,23 @@ workflows:
       - name: Add signing certificates to keychain
         script: |
           keychain add-certificates
-      - name: Set up code signing settings on Xcode project
+      - name: Configure iOS signing settings
         script: |
-          xcode-project use-profiles \
-            --project "ios/*.xcodeproj" \
-            --archive-method app-store \
-            --code-signing-setup-verbose-logging \
-            --warn-only
+          PROFILE_PATH=$(find "$HOME/Library/MobileDevice/Provisioning Profiles" -name "*.mobileprovision" | head -n 1)
+          security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" /tmp/profile.plist)
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" /tmp/profile.plist)
+          {
+            echo ""
+            echo "DEVELOPMENT_TEAM=$TEAM_ID"
+            echo "CODE_SIGN_STYLE=Manual"
+            echo "CODE_SIGN_IDENTITY=Apple Distribution"
+            echo "CODE_SIGN_IDENTITY[sdk=iphoneos*]=Apple Distribution"
+            echo "PROVISIONING_PROFILE_SPECIFIER=$PROFILE_NAME"
+            echo "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]=$PROFILE_NAME"
+          } >> ios/Flutter/Release.xcconfig
+          echo "Using provisioning profile: $PROFILE_NAME"
+          echo "Using Apple team: $TEAM_ID"
       - name: Build signed IPA
         script: |
           flutter build ipa --release \
