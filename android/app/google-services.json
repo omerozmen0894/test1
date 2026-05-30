@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "105292792236",
+    "firebase_url": "https://wrap-maze-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "wrap-maze",
+    "storage_bucket": "wrap-maze.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:105292792236:android:7b1d4bdc6629e9b1e83a09",
+        "android_client_info": {
+          "package_name": "com.example.wrap_maze"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjoOOqJb_YtF5EoFwf_Tzj8KSX4r6aFXw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:105292792236:android:0acb63e759bb11ace83a09",
+        "android_client_info": {
+          "package_name": "com.wrapmaze.game"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjoOOqJb_YtF5EoFwf_Tzj8KSX4r6aFXw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:105292792236:android:2b792357d4a4b8a6e83a09",
+        "android_client_info": {
+          "package_name": "com.yourdomain.wrapmaze"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjoOOqJb_YtF5EoFwf_Tzj8KSX4r6aFXw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
