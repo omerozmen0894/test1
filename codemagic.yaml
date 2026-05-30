@@ -43,7 +43,7 @@ workflows:
       - name: Set up code signing settings on Xcode project
         script: |
           xcode-project use-profiles \
-            --project ios/Runner.xcodeproj \
+            --project "ios/*.xcodeproj" \
             --archive-method app-store \
             --code-signing-setup-verbose-logging
       - name: Build signed IPA
