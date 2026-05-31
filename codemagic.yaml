@@ -44,10 +44,28 @@ workflows:
           keychain add-certificates
       - name: Configure iOS signing settings
         script: |
-          PROFILE_PATH=$(find "$HOME/Library/MobileDevice/Provisioning Profiles" -name "*.mobileprovision" | head -n 1)
-          security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist
-          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" /tmp/profile.plist)
-          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" /tmp/profile.plist)
+          set -euo pipefail
+
+          PROFILE_PATH=$(
+            find \
+              "$HOME/Library/MobileDevice/Provisioning Profiles" \
+              "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" \
+              -name "*.mobileprovision" -print 2>/dev/null | head -n 1
+          )
+
+          if [ -z "${PROFILE_PATH:-}" ]; then
+            echo "No iOS provisioning profile was found after fetch-signing-files."
+            echo "Available profiles:"
+            find "$HOME/Library" -name "*.mobileprovision" -print 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "Using provisioning profile file: $PROFILE_PATH"
+          PROFILE_PLIST="$CM_BUILD_DIR/profile.plist"
+          security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" "$PROFILE_PLIST")
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" "$PROFILE_PLIST")
+
           {
             echo ""
             echo "DEVELOPMENT_TEAM=$TEAM_ID"
