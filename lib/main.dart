@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'core/database/progress_model.dart';
 import 'core/providers/firebase_status_provider.dart';
 import 'core/providers/isar_provider.dart';
+import 'core/services/ad_service.dart';
 import 'core/services/play_games_service.dart';
 import 'firebase_options.dart';
 import 'features/auth/auth_screen.dart';
