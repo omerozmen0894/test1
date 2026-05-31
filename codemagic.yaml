@@ -26,6 +26,24 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter pub get
+      - name: Patch FlutterFire iOS modular imports
+        script: |
+          PUB_CACHE_DIR="${PUB_CACHE:-$HOME/.pub-cache}"
+          HOSTED_DIR="$PUB_CACHE_DIR/hosted/pub.dev"
+
+          patch_imports() {
+            local package_prefix="$1"
+            local module_name="$2"
+            find "$HOSTED_DIR" -path "*/${package_prefix}-*/ios/Classes/*.h" -type f -print0 2>/dev/null \
+              | xargs -0 perl -0pi -e "s/#import\\s+<Firebase\\/Firebase\\.h>/@import ${module_name};/g"
+          }
+
+          patch_imports "firebase_core" "FirebaseCore"
+          patch_imports "firebase_auth" "FirebaseAuth"
+          patch_imports "firebase_database" "FirebaseDatabase"
+          patch_imports "cloud_firestore" "FirebaseFirestore"
+
+          echo "Patched FlutterFire iOS headers for modular Firebase imports."
       - name: Install iOS pods
         script: |
           cd ios
