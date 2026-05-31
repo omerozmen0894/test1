@@ -7,7 +7,7 @@ workflows:
       app_store_connect: codemagic
     environment:
       flutter: stable
-      xcode: latest
+      xcode: 16.2
       cocoapods: default
       groups:
         - code-signing
