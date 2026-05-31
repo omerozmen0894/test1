@@ -28,7 +28,9 @@ workflows:
           flutter pub get
       - name: Install iOS pods
         script: |
-          find . -name "Podfile" -execdir pod install \;
+          cd ios
+          pod repo update
+          pod install
       - name: Set up keychain
         script: |
           keychain initialize
