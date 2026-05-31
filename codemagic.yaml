@@ -69,6 +69,7 @@ workflows:
 
           {
             echo ""
+            echo "IPHONEOS_DEPLOYMENT_TARGET=15.0"
             echo "DEVELOPMENT_TEAM=$TEAM_ID"
             echo "CODE_SIGN_STYLE=Manual"
             echo "CODE_SIGN_IDENTITY=Apple Distribution"
