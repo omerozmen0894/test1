@@ -27,34 +27,6 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter pub get
-      - name: Patch FlutterFire iOS modular imports
-        script: |
-          set -euo pipefail
-          PUB_CACHE_DIR="${PUB_CACHE:-$HOME/.pub-cache}"
-          HOSTED_DIR="$PUB_CACHE_DIR/hosted/pub.dev"
-
-          patch_imports() {
-            local package_prefix="$1"
-            local replacement="$2"
-            for package_dir in "$HOSTED_DIR"/"$package_prefix"-*; do
-              [ -d "$package_dir/ios/Classes" ] || continue
-              echo "Patching $package_dir"
-              find "$package_dir/ios/Classes" -type f \( -name "*.h" -o -name "*.m" \) -print0 \
-                | xargs -0 perl -0pi -e "s|#import\\s+<Firebase/Firebase\\.h>|${replacement}|g; s|@import\\s+Firebase\\w+;|${replacement}|g"
-            done
-          }
-
-          patch_imports "firebase_core" "#import <FirebaseCore/FirebaseCore.h>"
-          patch_imports "firebase_auth" "#import <FirebaseCore/FirebaseCore.h>\n#import <FirebaseAuth/FirebaseAuth.h>"
-          patch_imports "firebase_database" "#import <FirebaseCore/FirebaseCore.h>\n#import <FirebaseDatabase/FirebaseDatabase.h>"
-          patch_imports "cloud_firestore" "#import <FirebaseCore/FirebaseCore.h>\n#import <FirebaseFirestore/FirebaseFirestore.h>"
-
-          if find "$HOSTED_DIR" -path "*/firebase_*/ios/Classes/*" -type f \( -name "*.h" -o -name "*.m" \) -exec grep -H "#import <Firebase/Firebase.h>" {} + 2>/dev/null | grep .; then
-            echo "FlutterFire Firebase umbrella imports are still present after patch."
-            exit 1
-          fi
-
-          echo "Patched FlutterFire iOS headers for modular Firebase imports."
       - name: Install iOS pods
         script: |
           cd ios
