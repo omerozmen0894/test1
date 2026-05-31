@@ -29,8 +29,8 @@ workflows:
       - name: Install iOS pods
         script: |
           cd ios
-          pod repo update
-          pod install
+          rm -rf Pods Podfile.lock
+          pod install --repo-update
       - name: Set up keychain
         script: |
           keychain initialize
