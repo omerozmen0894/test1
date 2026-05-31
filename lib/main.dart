@@ -6,14 +6,12 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'core/database/progress_model.dart';
 import 'core/providers/firebase_status_provider.dart';
 import 'core/providers/isar_provider.dart';
-import 'core/services/ad_service.dart';
 import 'core/services/play_games_service.dart';
 import 'firebase_options.dart';
 import 'features/auth/auth_screen.dart';
@@ -42,12 +40,6 @@ void main() {
       firebaseReady = true;
     } catch (_) {
       // Desktop/debug builds can run without Firebase configuration.
-    }
-
-    try {
-      await MobileAds.instance.initialize();
-    } catch (_) {
-      // AdMob is only available on supported mobile targets.
     }
 
     runApp(ProviderScope(

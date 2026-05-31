@@ -31,11 +31,6 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  webview_wkwebview_path = File.join('.symlinks', 'plugins', 'webview_flutter_wkwebview', 'darwin')
-  if File.exist?(File.join(webview_wkwebview_path, 'webview_flutter_wkwebview.podspec'))
-    pod 'webview_flutter_wkwebview', :path => webview_wkwebview_path
-  end
-
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
