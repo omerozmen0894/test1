@@ -21,6 +21,7 @@ workflows:
     scripts:
       - name: Show versions
         script: |
+          flutter config --no-enable-swift-package-manager
           flutter --version
           xcodebuild -version
       - name: Get Flutter packages
