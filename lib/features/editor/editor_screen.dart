@@ -18,7 +18,7 @@ final _editorProvider = ChangeNotifierProvider<EditorNotifier>((ref) {
 });
 
 class EditorNotifier extends ChangeNotifier {
-  final Isar _isar;
+  final Isar? _isar;
   int size = 5;
   Cell? start;
   Cell? end;
@@ -70,7 +70,12 @@ class EditorNotifier extends ChangeNotifier {
   bool _isConnected(MazeConfig maze) {
     final visited = <Cell>{};
     final queue = [maze.start];
-    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    const dirs = [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+    ];
     while (queue.isNotEmpty) {
       final cur = queue.removeAt(0);
       if (visited.contains(cur)) continue;
@@ -84,29 +89,32 @@ class EditorNotifier extends ChangeNotifier {
   }
 
   MazeConfig _buildConfig() => MazeConfig(
-        size: size,
-        start: start ?? Cell(0, 0),
-        end: end ?? Cell(size - 1, size - 1),
-        walls: walls.toList(),
-        levelNumber: 0,
-        isCustom: true,
-      );
+    size: size,
+    start: start ?? Cell(0, 0),
+    end: end ?? Cell(size - 1, size - 1),
+    walls: walls.toList(),
+    levelNumber: 0,
+    isCustom: true,
+  );
 
   Future<void> saveLocal() async {
     if (start == null || end == null) return;
-    final level = CustomLevel()
-      ..uid = FirebaseAuth.instance.currentUser?.uid ?? 'local'
-      ..title = title
-      ..size = size
-      ..startJson = jsonEncode(start!.toMap())
-      ..endJson = jsonEncode(end!.toMap())
-      ..wallsJson = jsonEncode(walls.map((w) => w.toMap()).toList())
-      ..createdAt = DateTime.now()
-      ..playCount = 0
-      ..rating = 0
-      ..ratingCount = 0
-      ..isPublished = false;
-    await _isar.writeTxn(() => _isar.customLevels.put(level));
+    final isar = _isar;
+    if (isar == null) return;
+    final level =
+        CustomLevel()
+          ..uid = FirebaseAuth.instance.currentUser?.uid ?? 'local'
+          ..title = title
+          ..size = size
+          ..startJson = jsonEncode(start!.toMap())
+          ..endJson = jsonEncode(end!.toMap())
+          ..wallsJson = jsonEncode(walls.map((w) => w.toMap()).toList())
+          ..createdAt = DateTime.now()
+          ..playCount = 0
+          ..rating = 0
+          ..ratingCount = 0
+          ..isPublished = false;
+    await isar.writeTxn(() => isar.customLevels.put(level));
   }
 
   Future<void> publishToFirebase() async {
@@ -144,9 +152,11 @@ class EditorScreen extends ConsumerWidget {
     final editor = ref.watch(_editorProvider);
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F6),
+      backgroundColor:
+          isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F6),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -159,11 +169,19 @@ class EditorScreen extends ConsumerWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(editor.title,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+              Text(
+                editor.title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(width: 4),
-              Icon(Icons.edit_rounded, size: 14,
-                  color: scheme.onSurface.withOpacity(0.4)),
+              Icon(
+                Icons.edit_rounded,
+                size: 14,
+                color: scheme.onSurface.withOpacity(0.4),
+              ),
             ],
           ),
         ),
@@ -171,15 +189,17 @@ class EditorScreen extends ConsumerWidget {
         actions: [
           // Kaydet
           TextButton(
-            onPressed: editor.isValid
-                ? () async {
-                    await editor.saveLocal();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Kaydedildi!')));
+            onPressed:
+                editor.isValid
+                    ? () async {
+                      await editor.saveLocal();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Kaydedildi!')),
+                        );
+                      }
                     }
-                  }
-                : null,
+                    : null,
             child: const Text('Kaydet'),
           ),
         ],
@@ -190,41 +210,61 @@ class EditorScreen extends ConsumerWidget {
           _SizePicker(current: editor.size, onChanged: editor.setSize),
 
           // Araç çubuğu
-          _ToolBar(tool: editor.tool, onChanged: (t) {
-            editor.tool = t;
-            editor.notifyListeners();
-          }),
+          _ToolBar(
+            tool: editor.tool,
+            onChanged: (t) {
+              editor.tool = t;
+              editor.notifyListeners();
+            },
+          ),
 
           // Grid
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(builder: (ctx, c) {
-                final size = c.maxWidth < c.maxHeight ? c.maxWidth : c.maxHeight;
-                return Center(
-                  child: SizedBox(
-                    width: size, height: size,
-                    child: _EditorGrid(editor: editor, gridSize: size, isDark: isDark),
-                  ),
-                );
-              }),
+              padding: EdgeInsets.all(isTablet ? 24 : 16),
+              child: LayoutBuilder(
+                builder: (ctx, c) {
+                  final size =
+                      (c.maxWidth < c.maxHeight ? c.maxWidth : c.maxHeight)
+                          .clamp(280.0, isTablet ? 760.0 : 560.0)
+                          .toDouble();
+                  return Center(
+                    child: SizedBox(
+                      width: size,
+                      height: size,
+                      child: _EditorGrid(
+                        editor: editor,
+                        gridSize: size,
+                        isDark: isDark,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
 
           // Yayınla
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            padding: EdgeInsets.fromLTRB(
+              isTablet ? 24 : 20,
+              0,
+              isTablet ? 24 : 20,
+              isTablet ? 24 : 20,
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: editor.isValid
-                        ? () => _testPlay(context, editor)
-                        : null,
+                    onPressed:
+                        editor.isValid
+                            ? () => _testPlay(context, editor)
+                            : null,
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 46),
+                      minimumSize: Size(0, isTablet ? 54 : 46),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('▶ Test Oyna'),
                   ),
@@ -232,27 +272,36 @@ class EditorScreen extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: FilledButton(
-                    onPressed: editor.isValid && !editor.isPublishing
-                        ? () async {
-                            await editor.publishToFirebase();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('🌍 Yayınlandı!')));
+                    onPressed:
+                        editor.isValid && !editor.isPublishing
+                            ? () async {
+                              await editor.publishToFirebase();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('🌍 Yayınlandı!'),
+                                  ),
+                                );
+                              }
                             }
-                          }
-                        : null,
+                            : null,
                     style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, 46),
+                      minimumSize: Size(0, isTablet ? 54 : 46),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: editor.isPublishing
-                        ? const SizedBox(
-                            width: 18, height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Text('🌍 Yayınla'),
+                    child:
+                        editor.isPublishing
+                            ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                            : const Text('🌍 Yayınla'),
                   ),
                 ),
               ],
@@ -267,31 +316,41 @@ class EditorScreen extends ConsumerWidget {
     final ctrl = TextEditingController(text: editor.title);
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Labirent Adı'),
-        content: TextField(controller: ctrl, maxLength: 30,
-            decoration: const InputDecoration(hintText: 'Adını gir...')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal')),
-          FilledButton(
-            onPressed: () {
-              if (ctrl.text.trim().isNotEmpty) {
-                editor.title = ctrl.text.trim();
-                editor.notifyListeners();
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('Tamam'),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Labirent Adı'),
+            content: TextField(
+              controller: ctrl,
+              maxLength: 30,
+              decoration: const InputDecoration(hintText: 'Adını gir...'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('İptal'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (ctrl.text.trim().isNotEmpty) {
+                    editor.title = ctrl.text.trim();
+                    editor.notifyListeners();
+                  }
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Tamam'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _testPlay(BuildContext context, EditorNotifier editor) {
     // TODO: EditorNotifier'dan MazeConfig oluşturup GameScreen'e yönlendir
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Test modu — GameScreen entegrasyonu gerekli')));
+      const SnackBar(
+        content: Text('Test modu — GameScreen entegrasyonu gerekli'),
+      ),
+    );
   }
 }
 
@@ -302,7 +361,11 @@ class _EditorGrid extends StatelessWidget {
   final double gridSize;
   final bool isDark;
 
-  const _EditorGrid({required this.editor, required this.gridSize, required this.isDark});
+  const _EditorGrid({
+    required this.editor,
+    required this.gridSize,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +396,9 @@ class _EditorGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: n, mainAxisSpacing: 2, crossAxisSpacing: 2,
+            crossAxisCount: n,
+            mainAxisSpacing: 2,
+            crossAxisSpacing: 2,
           ),
           itemCount: n * n,
           itemBuilder: (ctx, i) {
@@ -349,9 +414,11 @@ class _EditorGrid extends StatelessWidget {
               color = const Color(0xFF93C5FD);
               label = 'B';
             } else if (editor.walls.contains(cell)) {
-              color = isDark ? const Color(0xFF374151) : const Color(0xFF9CA3AF);
+              color =
+                  isDark ? const Color(0xFF374151) : const Color(0xFF9CA3AF);
             } else {
-              color = isDark ? const Color(0xFF252525) : const Color(0xFFF1F0EC);
+              color =
+                  isDark ? const Color(0xFF252525) : const Color(0xFFF1F0EC);
             }
 
             return AnimatedContainer(
@@ -361,13 +428,19 @@ class _EditorGrid extends StatelessWidget {
                 color: color,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: label != null
-                  ? Center(
-                      child: Text(label,
+              child:
+                  label != null
+                      ? Center(
+                        child: Text(
+                          label,
                           style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w700,
-                              color: Color(0xFF1A1A1A))))
-                  : null,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                        ),
+                      )
+                      : null,
             );
           },
         ),
@@ -385,39 +458,62 @@ class _SizePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Row(
-        children: [
-          Text('Grid:', style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
-          const SizedBox(width: 10),
-          ...[4, 5, 6, 7, 8].map((s) {
-            final selected = s == current;
-            return GestureDetector(
-              onTap: () => onChanged(s),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(right: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.surfaceVariant,
-                  borderRadius: BorderRadius.circular(8),
+    final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: isTablet ? 620 : double.infinity),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 24 : 20,
+            vertical: 8,
+          ),
+          child: Row(
+            children: [
+              Text(
+                'Grid:',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.5),
                 ),
-                child: Text('${s}x$s',
-                    style: TextStyle(
+              ),
+              const SizedBox(width: 10),
+              ...[4, 5, 6, 7, 8].map((s) {
+                final selected = s == current;
+                return GestureDetector(
+                  onTap: () => onChanged(s),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          selected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${s}x$s',
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: selected
-                            ? Theme.of(context).colorScheme.onPrimary
-                            : Theme.of(context).colorScheme.onSurface)),
-              ),
-            );
-          }),
-        ],
+                        color:
+                            selected
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -433,6 +529,7 @@ class _ToolBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
     final tools = [
       (EditorTool.wall, Icons.square_rounded, 'Duvar'),
       (EditorTool.start, Icons.play_arrow_rounded, 'Başlangıç'),
@@ -440,37 +537,59 @@ class _ToolBar extends StatelessWidget {
       (EditorTool.eraser, Icons.auto_fix_high_rounded, 'Sil'),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      child: Row(
-        children: tools.map((t) {
-          final selected = t.$1 == tool;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(t.$1),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                margin: const EdgeInsets.only(right: 6),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: selected ? scheme.primary : scheme.surfaceVariant,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    Icon(t.$2, size: 18,
-                        color: selected ? scheme.onPrimary : scheme.onSurface.withOpacity(0.6)),
-                    const SizedBox(height: 2),
-                    Text(t.$3,
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: selected ? scheme.onPrimary : scheme.onSurface.withOpacity(0.6))),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: isTablet ? 620 : double.infinity),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 24 : 20,
+            vertical: 4,
+          ),
+          child: Row(
+            children:
+                tools.map((t) {
+                  final selected = t.$1 == tool;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => onChanged(t.$1),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        margin: const EdgeInsets.only(right: 6),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color:
+                              selected ? scheme.primary : scheme.surfaceVariant,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              t.$2,
+                              size: 18,
+                              color:
+                                  selected
+                                      ? scheme.onPrimary
+                                      : scheme.onSurface.withOpacity(0.6),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              t.$3,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color:
+                                    selected
+                                        ? scheme.onPrimary
+                                        : scheme.onSurface.withOpacity(0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+          ),
+        ),
       ),
     );
   }
