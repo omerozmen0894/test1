@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,16 +22,20 @@ void main() {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    await SystemChrome.setPreferredOrientations(
-        [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+    await SystemChrome.setPreferredOrientations(DeviceOrientation.values);
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ));
 
-    final dir = await getApplicationDocumentsDirectory();
-    final isar = await _openStore(dir.path);
+    final Isar? isar;
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      isar = null;
+    } else {
+      final dir = await getApplicationDocumentsDirectory();
+      isar = await _openStore(dir.path);
+    }
 
     var firebaseReady = false;
     try {
@@ -52,11 +57,17 @@ void main() {
     ));
   }, (error, stack) {
     WidgetsFlutterBinding.ensureInitialized();
-    runApp(_StartupErrorApp(error: error));
+    runApp(ProviderScope(
+      overrides: [
+        isarProvider.overrideWithValue(null),
+        firebaseReadyProvider.overrideWithValue(false),
+      ],
+      child: const _App(),
+    ));
   });
 }
 
-Future<Isar> _openStore(String directory) async {
+Future<Isar?> _openStore(String directory) async {
   final schemas = [
     LevelProgressSchema,
     DailyRecordSchema,
@@ -65,65 +76,22 @@ Future<Isar> _openStore(String directory) async {
     AppSettingsSchema,
     OfflineScoreSchema,
   ];
-  try {
-    return await Isar.open(
-      schemas,
-      directory: directory,
-      name: 'wrap_maze_store_v3',
-    );
-  } catch (_) {
-    return Isar.open(
-      schemas,
-      directory: directory,
-      name: 'wrap_maze_store_recovery_v1',
-    );
+  for (final name in ['wrap_maze_store_v3', 'wrap_maze_store_recovery_v1']) {
+    try {
+      return await Isar.open(
+        schemas,
+        directory: directory,
+        name: name,
+      );
+    } catch (_) {}
   }
+  return null;
 }
 
 class _App extends ConsumerStatefulWidget {
   const _App();
   @override
   ConsumerState<_App> createState() => _AppState();
-}
-
-class _StartupErrorApp extends StatelessWidget {
-  final Object error;
-
-  const _StartupErrorApp({required this.error});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.error_outline_rounded, size: 44),
-                const SizedBox(height: 16),
-                const Text(
-                  'Wrap Maze acilamadi',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Bu ekrani goruyorsan hata uygulama icinde yakalandi. Mesaji bana gonder, direkt nokta atisi duzelteyim.',
-                ),
-                const SizedBox(height: 16),
-                SelectableText(
-                  '$error',
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _AppState extends ConsumerState<_App> {
