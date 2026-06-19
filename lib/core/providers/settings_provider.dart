@@ -14,6 +14,7 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
   Future<AppSettings> build() async {
     final isar = ref.watch(isarProvider);
     final uid = ref.watch(currentUidProvider);
+    if (isar == null) return AppSettings.defaults(uid);
     return await isar.appSettings.filter().uidEqualTo(uid).findFirst() ??
         AppSettings.defaults(uid);
   }
@@ -21,6 +22,12 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
   Future<void> _update(void Function(AppSettings s) fn) async {
     final isar = ref.read(isarProvider);
     final uid = ref.read(currentUidProvider);
+    if (isar == null) {
+      final s = state.valueOrNull ?? AppSettings.defaults(uid);
+      fn(s);
+      state = AsyncData(s);
+      return;
+    }
     await isar.writeTxn(() async {
       final s = await isar.appSettings.filter().uidEqualTo(uid).findFirst() ??
           AppSettings.defaults(uid);

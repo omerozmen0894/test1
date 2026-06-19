@@ -12,7 +12,7 @@ final offlineLeaderboardProvider =
 /// Yerel sıralama — internet olmadan çalışır
 /// Aynı cihazdaki farklı kullanıcı adlarını saklar
 class OfflineLeaderboardService {
-  final Isar _isar;
+  final Isar? _isar;
   OfflineLeaderboardService(this._isar);
 
   Future<void> submitScore({
@@ -21,9 +21,11 @@ class OfflineLeaderboardService {
     required int bestStreak,
     required int dailyCompleted,
   }) async {
-    await _isar.writeTxn(() async {
+    final isar = _isar;
+    if (isar == null) return;
+    await isar.writeTxn(() async {
       // Aynı isimde varsa güncelle
-      final existing = await _isar.offlineScores
+      final existing = await isar.offlineScores
           .filter()
           .displayNameEqualTo(displayName)
           .findFirst();
@@ -34,10 +36,10 @@ class OfflineLeaderboardService {
           existing.bestStreak = bestStreak;
           existing.dailyCompleted = dailyCompleted;
           existing.recordedAt = DateTime.now();
-          await _isar.offlineScores.put(existing);
+          await isar.offlineScores.put(existing);
         }
       } else {
-        await _isar.offlineScores.put(OfflineScore.create(
+        await isar.offlineScores.put(OfflineScore.create(
           displayName: displayName,
           totalCompleted: totalCompleted,
           bestStreak: bestStreak,
@@ -49,7 +51,9 @@ class OfflineLeaderboardService {
 
   /// Top 20 yerel sıralama — tamamlanan bölüm sayısına göre
   Future<List<OfflineScore>> getTopScores({int limit = 20}) async {
-    return await _isar.offlineScores
+    final isar = _isar;
+    if (isar == null) return const [];
+    return await isar.offlineScores
         .filter()
         .totalCompletedGreaterThan(0)
         .sortByTotalCompletedDesc()
@@ -59,13 +63,15 @@ class OfflineLeaderboardService {
 
   /// Benim sıram (displayName'e göre)
   Future<int?> myRank(String displayName) async {
-    final myScore = await _isar.offlineScores
+    final isar = _isar;
+    if (isar == null) return null;
+    final myScore = await isar.offlineScores
         .filter()
         .displayNameEqualTo(displayName)
         .findFirst();
     if (myScore == null) return null;
 
-    final above = await _isar.offlineScores
+    final above = await isar.offlineScores
         .filter()
         .totalCompletedGreaterThan(myScore.totalCompleted)
         .count();
@@ -74,6 +80,8 @@ class OfflineLeaderboardService {
 
   /// Tüm kayıtları temizle (reset)
   Future<void> clearAll() async {
-    await _isar.writeTxn(() => _isar.offlineScores.clear());
+    final isar = _isar;
+    if (isar == null) return;
+    await isar.writeTxn(() => isar.offlineScores.clear());
   }
 }

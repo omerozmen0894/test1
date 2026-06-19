@@ -8,6 +8,7 @@ import '../../core/services/auth_service.dart';
 final completedLevelsProvider = StreamProvider<List<LevelProgress>>((ref) {
   final isar = ref.watch(isarProvider);
   final uid = ref.watch(currentUidProvider);
+  if (isar == null) return Stream.value(const []);
   return isar.levelProgress
       .filter()
       .uidEqualTo(uid)

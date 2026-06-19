@@ -16,13 +16,15 @@ final streakDataProvider = FutureProvider<StreakData>((ref) async {
 });
 
 class StreakService {
-  final Isar _isar;
+  final Isar? _isar;
   final String _uid;
   StreakService(this._isar, this._uid);
 
   Future<StreakData> load() async {
+    final isar = _isar;
+    if (isar == null) return StreakData.empty();
     final record =
-        await _isar.streakRecords.filter().uidEqualTo(_uid).findFirst();
+        await isar.streakRecords.filter().uidEqualTo(_uid).findFirst();
     if (record == null) return StreakData.empty();
     return StreakData(
       currentStreak: record.currentStreak,
@@ -36,13 +38,15 @@ class StreakService {
 
   /// Günlük tamamlandığında çağır — yeni rozet varsa döner
   Future<List<BadgeInfo>> markToday() async {
+    final isar = _isar;
+    if (isar == null) return const [];
     final current = await load();
     final oldBadgeCount = current.unlockedBadges.length;
     final updated = current.addToday();
 
-    await _isar.writeTxn(() async {
+    await isar.writeTxn(() async {
       final record =
-          await _isar.streakRecords.filter().uidEqualTo(_uid).findFirst() ??
+          await isar.streakRecords.filter().uidEqualTo(_uid).findFirst() ??
               StreakRecord.empty(_uid);
       record
         ..currentStreak = updated.currentStreak
@@ -51,7 +55,7 @@ class StreakService {
         ..badgeIds = updated.unlockedBadges.map((b) => b.id).toList()
         ..badgeData =
             updated.unlockedBadges.map((b) => jsonEncode(b.toMap())).toList();
-      await _isar.streakRecords.put(record);
+      await isar.streakRecords.put(record);
     });
 
     // Yeni kazanılan rozetleri döndür
@@ -59,8 +63,10 @@ class StreakService {
   }
 
   Future<void> reset() async {
-    await _isar.writeTxn(() async {
-      await _isar.streakRecords.filter().uidEqualTo(_uid).deleteAll();
+    final isar = _isar;
+    if (isar == null) return;
+    await isar.writeTxn(() async {
+      await isar.streakRecords.filter().uidEqualTo(_uid).deleteAll();
     });
   }
 }

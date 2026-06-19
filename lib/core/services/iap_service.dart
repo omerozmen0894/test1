@@ -46,7 +46,7 @@ class IAPProduct {
 }
 
 class IAPService {
-  final Isar _isar;
+  final Isar? _isar;
   final String _uid;
   StreamSubscription<List<PurchaseDetails>>? _sub;
   final _products = <String, IAPProduct>{};
@@ -127,8 +127,13 @@ class IAPService {
   }
 
   Future<void> _handlePurchased(PurchaseDetails p) async {
-    await _isar.writeTxn(() async {
-      final s = await _isar.appSettings.filter().uidEqualTo(_uid).findFirst() ??
+    final isar = _isar;
+    if (isar == null) {
+      _purchaseController.add(p.productID);
+      return;
+    }
+    await isar.writeTxn(() async {
+      final s = await isar.appSettings.filter().uidEqualTo(_uid).findFirst() ??
           AppSettings.defaults(_uid);
       switch (p.productID) {
         case ProductIds.removeAds:
@@ -143,7 +148,7 @@ class IAPService {
         case ProductIds.hints20:
           s.totalHints = (s.totalHints) + 20;
       }
-      await _isar.appSettings.put(s);
+      await isar.appSettings.put(s);
     });
     _purchaseController.add(p.productID);
   }
