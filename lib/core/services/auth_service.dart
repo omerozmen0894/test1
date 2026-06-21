@@ -96,6 +96,26 @@ class AuthService {
     await _auth.currentUser?.verifyBeforeUpdateEmail(cleanEmail);
   }
 
+  Future<void> deleteCurrentAccount({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final email = user.email;
+    final cleanPassword = password?.trim();
+    if (!user.isAnonymous &&
+        email != null &&
+        cleanPassword != null &&
+        cleanPassword.isNotEmpty) {
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: cleanPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+    }
+
+    await user.delete();
+  }
+
   Future<void> signOut() => _auth.signOut();
 
   String _cleanName(String value) {

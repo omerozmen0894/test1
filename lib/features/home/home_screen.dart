@@ -9,7 +9,6 @@ import '../daily/daily_screen.dart';
 import '../editor/editor_screen.dart';
 import '../game/game_provider.dart';
 import '../game/game_screen.dart';
-import '../iap/iap_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
 import '../leaderboard/offline_leaderboard_screen.dart';
 import '../multiplayer/multiplayer_screen.dart';
@@ -318,73 +317,6 @@ class HomeScreen extends ConsumerWidget {
                               ),
                         ),
                       ],
-                    ),
-                  ),
-                ),
-
-                // ── Premium banner (reklam yoksa) ─────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      isTablet ? 32 : 24,
-                      18,
-                      isTablet ? 32 : 24,
-                      0,
-                    ),
-                    child: GestureDetector(
-                      onTap:
-                          () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const IAPScreen(),
-                            ),
-                          ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [scheme.primary, scheme.secondary],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          children: [
-                            const Text('👑', style: TextStyle(fontSize: 20)),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Premium\'a Geç',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: scheme.onPrimary,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Temalar · İpuçları · Reklamsız',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: scheme.onPrimary.withOpacity(0.8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              color: scheme.onPrimary,
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
                   ),
                 ),

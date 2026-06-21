@@ -30,7 +30,7 @@ workflows:
           python3 - <<'PY'
           from pathlib import Path
           path = Path("pubspec.yaml")
-          removed = {"isar_flutter_libs", "games_services"}
+          removed = {"isar_flutter_libs", "games_services", "in_app_purchase", "in_app_purchase_android"}
           lines = []
           for line in path.read_text().splitlines():
               stripped = line.strip()
@@ -52,7 +52,7 @@ workflows:
           from pathlib import Path
           path = Path(".flutter-plugins-dependencies")
           data = json.loads(path.read_text())
-          removed = {"isar_flutter_libs", "games_services"}
+          removed = {"isar_flutter_libs", "games_services", "in_app_purchase", "in_app_purchase_android"}
           for platform in ("ios", "macos"):
               plugins = data.get("plugins", {}).get(platform, [])
               data["plugins"][platform] = [
@@ -66,7 +66,7 @@ workflows:
           from pathlib import Path
           data = json.loads(Path(".flutter-plugins-dependencies").read_text())
           ios_plugins = {p.get("name") for p in data.get("plugins", {}).get("ios", [])}
-          blocked = ios_plugins & {"isar_flutter_libs", "games_services"}
+          blocked = ios_plugins & {"isar_flutter_libs", "games_services", "in_app_purchase", "in_app_purchase_android", "in_app_purchase_storekit"}
           if blocked:
               raise SystemExit(f"Blocked iOS plugins still present: {sorted(blocked)}")
           PY
@@ -89,10 +89,12 @@ workflows:
           blocked_imports = (
               "#if __has_include(<isar_flutter_libs/",
               "#if __has_include(<games_services/",
+              "#if __has_include(<in_app_purchase_storekit/",
           )
           blocked_registrations = (
               "IsarFlutterLibsPlugin registerWithRegistrar",
               "SwiftGamesServicesPlugin registerWithRegistrar",
+              "InAppPurchasePlugin registerWithRegistrar",
           )
           for line in path.read_text().splitlines():
               if any(token in line for token in blocked_imports):
@@ -107,7 +109,7 @@ workflows:
               cleaned.append(line)
           path.write_text("\n".join(cleaned) + "\n")
           PY
-          grep -Eq "IsarFlutterLibsPlugin|SwiftGamesServicesPlugin|isar_flutter_libs|games_services" ios/Runner/GeneratedPluginRegistrant.m && exit 1 || true
+          grep -Eq "IsarFlutterLibsPlugin|SwiftGamesServicesPlugin|InAppPurchasePlugin|isar_flutter_libs|games_services|in_app_purchase" ios/Runner/GeneratedPluginRegistrant.m && exit 1 || true
       - name: Set up keychain
         script: |
           keychain initialize
@@ -160,7 +162,7 @@ workflows:
           flutter build ipa --release \
             --no-pub \
             --build-name=1.0 \
-            --build-number=44 \
+            --build-number=45 \
             --export-method=app-store
     artifacts:
       - build/ios/ipa/*.ipa
