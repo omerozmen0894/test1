@@ -161,8 +161,8 @@ workflows:
         script: |
           flutter build ipa --release \
             --no-pub \
-            --build-name=1.0 \
-            --build-number=45 \
+            --build-name=1.0.1 \
+            --build-number=46 \
             --export-method=app-store
     artifacts:
       - build/ios/ipa/*.ipa
