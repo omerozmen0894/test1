@@ -363,6 +363,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
   }
 
   Future<void> _deleteLocalUserData(String uid) async {
+    await deleteCompletedLevelFallback(uid);
     final isar = ref.read(isarProvider);
     if (isar == null) return;
     await isar.writeTxn(() async {

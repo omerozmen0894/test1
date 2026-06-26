@@ -919,6 +919,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final seconds = DateTime.now().difference(_startedAt).inSeconds;
     final isar = ref.read(isarProvider);
     final uid = ref.read(currentUidProvider);
+    await saveCompletedLevelFallback(uid: uid, levelNumber: _level);
     if (isar != null) {
       await isar.writeTxn(() async {
         final existing =
@@ -940,8 +941,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ..completedAt = DateTime.now();
         await isar.levelProgress.put(record);
       });
-      ref.invalidate(completedLevelsProvider);
     }
+    ref.invalidate(completedLevelsProvider);
     unawaited(
       ref
           .read(leaderboardServiceProvider)
