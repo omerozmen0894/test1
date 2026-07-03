@@ -104,9 +104,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     _loadCoins();
     _startTicker();
     _playLevelIntro();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _showTutorialIfNeeded(),
-    );
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _showTutorialIfNeeded());
   }
 
   @override
@@ -194,9 +193,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   bool get _hasEnemy => _level >= 4 && _level % 3 == 0;
-  bool get _hasTimer => _level >= 4 && _level % 2 == 0;
-  bool get _hasTraps => _level >= 5 && _level % 3 != 1;
-  bool get _hasTimeBonus => _level >= 6 && _level % 2 == 0;
+  bool get _hasTimer => _level >= 4 && (_level % 2 == 0 || _isBossLevel);
+  bool get _hasTraps =>
+      _level >= 5 && (_level % 3 != 1 || (_level >= 12 && _level % 4 == 0));
+  bool get _hasTimeBonus =>
+      _level >= 6 && (_hasTimer || _goal == _LevelGoal.crystalOrder);
   bool get _isBossLevel => _level > 0 && _level % 10 == 0;
 
   int get _timeTarget {
@@ -206,6 +207,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   int get _remainingSeconds => math.max(0, _timeTarget - _elapsedSeconds);
+
+  Color get _stageAccent {
+    if (_isBossLevel) return const Color(0xFFEF4444);
+    if (_goal == _LevelGoal.crystalOrder) return const Color(0xFF06B6D4);
+    if (_goal == _LevelGoal.keyExit) return const Color(0xFF0EA5E9);
+    if (_hasTraps) return const Color(0xFFF97316);
+    return const Color(0xFF7C3AED);
+  }
 
   _LevelGoal _goalForLevel(int level) {
     if (level > 0 && level % 10 == 0) return _LevelGoal.boss;
@@ -218,20 +227,21 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   String get _goalTitle => switch (_goal) {
-    _LevelGoal.keyExit => 'Anahtarlarla cikisa ulas',
-    _LevelGoal.crystalOrder => 'Kristalleri sirayla topla',
-    _LevelGoal.noTrap => 'Tuzaga basmadan bitir',
-    _LevelGoal.boss => 'Boss baskisindan kac',
-    _LevelGoal.fillAll => 'Tum kareleri boya',
-  };
+        _LevelGoal.keyExit => 'Anahtarlarla cikisa ulas',
+        _LevelGoal.crystalOrder => 'Kristalleri sirayla topla',
+        _LevelGoal.noTrap => 'Tuzaga basmadan bitir',
+        _LevelGoal.boss => 'Boss baskisindan kac',
+        _LevelGoal.fillAll => 'Tum kareleri boya',
+      };
 
   String get _goalProgress => switch (_goal) {
-    _LevelGoal.keyExit => '${_keyCells.length} anahtar kaldi',
-    _LevelGoal.crystalOrder => '$_crystalIndex/${_crystalRoute.length} kristal',
-    _LevelGoal.noTrap => _trapHits == 0 ? 'Temiz rota' : '$_trapHits tuzak',
-    _LevelGoal.boss => 'Baski $_bossPressure',
-    _LevelGoal.fillAll => '${(_state.progressPercent * 100).round()}%',
-  };
+        _LevelGoal.keyExit => '${_keyCells.length} anahtar kaldi',
+        _LevelGoal.crystalOrder =>
+          '$_crystalIndex/${_crystalRoute.length} kristal',
+        _LevelGoal.noTrap => _trapHits == 0 ? 'Temiz rota' : '$_trapHits tuzak',
+        _LevelGoal.boss => 'Baski $_bossPressure',
+        _LevelGoal.fillAll => '${(_state.progressPercent * 100).round()}%',
+      };
 
   String _flavorForLevel(int level) {
     if (level == 2) return 'Anahtarı Bul';
@@ -253,7 +263,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final step = math.max(2, solution.length ~/ (count + 1));
     return {
       for (var i = 1; i <= count; i++)
-        solution[(i * step).clamp(1, solution.length - 2)],
+        solution[(i * step).clamp(1, solution.length - 2)]
     };
   }
 
@@ -300,10 +310,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final solution = MazeSolver.solve(maze);
     if (solution == null || solution.length < 12) return const {};
     return {
-        solution[(solution.length * 0.24).floor()],
-        if (level >= 15 || _isBossLevel)
-          solution[(solution.length * 0.46).floor()],
-      }
+      solution[(solution.length * 0.24).floor()],
+      if (level >= 15 || _isBossLevel)
+        solution[(solution.length * 0.46).floor()],
+    }
       ..remove(maze.start)
       ..remove(maze.end);
   }
@@ -313,9 +323,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final solution = MazeSolver.solve(maze);
     if (solution == null || solution.length < 12) return const {};
     return {
-        solution[(solution.length * 0.62).floor()],
-        if (level >= 15) solution[(solution.length * 0.78).floor()],
-      }
+      solution[(solution.length * 0.62).floor()],
+      if (level >= 15) solution[(solution.length * 0.78).floor()],
+    }
       ..remove(maze.start)
       ..remove(maze.end);
   }
@@ -329,12 +339,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (solution == null || solution.length < 14) return const {};
     final count = math.min(1 + level ~/ 10, 4);
     return {
-        for (var i = 0; i < count; i++)
-          solution[((solution.length * (0.38 + i * 0.17)).floor()).clamp(
-            2,
-            solution.length - 3,
-          )],
-      }
+      for (var i = 0; i < count; i++)
+        solution[((solution.length * (0.38 + i * 0.17)).floor())
+            .clamp(2, solution.length - 3)]
+    }
       ..remove(maze.start)
       ..remove(maze.end);
   }
@@ -344,9 +352,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final solution = MazeSolver.solve(maze);
     if (solution == null || solution.length < 16) return const {};
     return {
-        solution[(solution.length * 0.55).floor()],
-        if (level >= 18) solution[(solution.length * 0.78).floor()],
-      }
+      solution[(solution.length * 0.55).floor()],
+      if (level >= 18) solution[(solution.length * 0.78).floor()],
+    }
       ..remove(maze.start)
       ..remove(maze.end);
   }
@@ -369,26 +377,22 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _triggerBlast(Cell cell) {
     HapticFeedback.heavyImpact();
     final solution = MazeSolver.solve(_state.maze) ?? const <Cell>[];
-    final blastWave =
-        {
-          cell,
-          for (final d in Direction.values) cell.offset(d.dr, d.dc),
-          cell.offset(-1, -1),
-          cell.offset(-1, 1),
-          cell.offset(1, -1),
-          cell.offset(1, 1),
-        }.where(_state.maze.isValid).toSet();
+    final blastWave = {
+      cell,
+      for (final d in Direction.values) cell.offset(d.dr, d.dc),
+      cell.offset(-1, -1),
+      cell.offset(-1, 1),
+      cell.offset(1, -1),
+      cell.offset(1, 1),
+    }.where(_state.maze.isValid).toSet();
     var clearedRubble =
         _rubbleCells.where((c) => _distance(c, cell) <= 2).toSet();
     if (clearedRubble.isEmpty && _rubbleCells.isNotEmpty) {
       clearedRubble = {_rubbleCells.first};
     }
-    final remaining =
-        solution
-            .where(
-              (c) => !_state.inPath(c) && c != _state.maze.end && c != cell,
-            )
-            .toList();
+    final remaining = solution
+        .where((c) => !_state.inPath(c) && c != _state.maze.end && c != cell)
+        .toList();
     final shiftedBonuses = <Cell>{};
     for (var i = 0; i < math.min(3, remaining.length); i++) {
       shiftedBonuses.add(remaining[(i * 3 + _level) % remaining.length]);
@@ -488,19 +492,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Cell? _nextEnemyStep() {
     final enemy = _enemy ?? _state.maze.end;
-    final options =
-        Direction.values
-            .map((d) => enemy.offset(d.dr, d.dc))
-            .where(
-              (c) =>
-                  _state.maze.isValid(c) &&
-                  (c == _state.head || !_state.inPath(c)),
-            )
-            .toList();
+    final options = Direction.values
+        .map((d) => enemy.offset(d.dr, d.dc))
+        .where((c) =>
+            _state.maze.isValid(c) && (c == _state.head || !_state.inPath(c)))
+        .toList();
     if (options.isEmpty) return enemy;
-    options.sort(
-      (a, b) => _distance(a, _state.head).compareTo(_distance(b, _state.head)),
-    );
+    options.sort((a, b) =>
+        _distance(a, _state.head).compareTo(_distance(b, _state.head)));
     return options.first;
   }
 
@@ -595,8 +594,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final collectedBonus = _bonusCells.contains(updated.head);
     final collectedKey = _keyCells.contains(updated.head);
     final collectedTime = _timeBonusCells.contains(updated.head);
-    final collectedCrystal =
-        _goal == _LevelGoal.crystalOrder &&
+    final collectedCrystal = _goal == _LevelGoal.crystalOrder &&
         _crystalIndex < _crystalRoute.length &&
         updated.head == _crystalRoute[_crystalIndex];
     final hitTrap = _trapCells.contains(updated.head);
@@ -621,10 +619,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       }
       if (collectedCrystal) {
         _crystalIndex++;
-        _levelFlavor =
-            _crystalIndex >= _crystalRoute.length
-                ? 'Cikis acildi'
-                : 'Siradaki kristal';
+        _levelFlavor = _crystalIndex >= _crystalRoute.length
+            ? 'Cikis acildi'
+            : 'Siradaki kristal';
       }
     });
     if (collectedBonus || collectedKey || collectedTime || collectedCrystal) {
@@ -633,18 +630,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         collectedKey
             ? 'ANAHTAR!'
             : collectedCrystal
-            ? 'KRISTAL!'
-            : collectedTime
-            ? 'ZAMAN +6'
-            : 'KALKAN +1',
+                ? 'KRISTAL!'
+                : collectedTime
+                    ? 'ZAMAN +6'
+                    : 'KALKAN +1',
         collectedKey ? const Color(0xFF0EA5E9) : const Color(0xFF06B6D4),
       );
     }
     if (hitTrap && !_state.isWon) {
       _triggerTrap(updated.head);
     }
-    if (_flowStreak > 0 && _flowStreak % 8 == 0) {
+    if (_flowStreak > 0 && _flowStreak % 6 == 0) {
       HapticFeedback.selectionClick();
+      _showFeedback('AKIS x$_flowStreak', _stageAccent);
     }
     if (_unstableCells.contains(updated.head)) {
       _triggerBlast(updated.head);
@@ -665,30 +663,28 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       final nextLevel = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
-        builder:
-            (context) => AlertDialog(
-              icon: const Icon(Icons.emoji_events_rounded, size: 42),
-              title: const Text('Bölüm tamamlandı'),
-              content: _WinSummary(
-                moves: winningState.moveCount,
-                stars: stars,
-                reward: reward,
-                coins: _coins,
-                perfect:
-                    usedHints == 0 &&
-                    updated.moveCount == updated.maze.totalCells - 1,
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Menü'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Sonraki bölüm'),
-                ),
-              ],
+        builder: (context) => AlertDialog(
+          icon: const Icon(Icons.emoji_events_rounded, size: 42),
+          title: const Text('Bölüm tamamlandı'),
+          content: _WinSummary(
+            moves: winningState.moveCount,
+            stars: stars,
+            reward: reward,
+            coins: _coins,
+            perfect: usedHints == 0 &&
+                updated.moveCount == updated.maze.totalCells - 1,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Menü'),
             ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sonraki bölüm'),
+            ),
+          ],
+        ),
       );
       if (!mounted) return;
       if (nextLevel == true) {
@@ -745,8 +741,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final perfectMoves = _state.maze.totalCells - 1;
     final perfectBonus = usedHints == 0 && moves <= perfectMoves ? 15 : 0;
     final noHintBonus = usedHints == 0 ? 10 : 0;
-    final comboBonus = math.min(_flowStreak ~/ 8 * 2, 12);
-    return stars * 10 + perfectBonus + noHintBonus + comboBonus;
+    final comboBonus = math.min(_flowStreak ~/ 6 * 3, 18);
+    final chapterBonus = _level >= 10 ? math.min(18, 5 + _level ~/ 2) : 0;
+    return stars * 10 + perfectBonus + noHintBonus + comboBonus + chapterBonus;
   }
 
   Future<void> _addCoins(int amount) async {
@@ -846,21 +843,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         return current == _state.maze.end;
       }
 
-      final nextCells =
-          Direction.values
-              .map((d) => current.offset(d.dr, d.dc))
-              .where(
-                (next) =>
-                    _state.maze.isValid(next) &&
-                    !_rubbleCells.contains(next) &&
-                    !lockedFor(next, visited) &&
-                    !visited.contains(next),
-              )
-              .toList()
-            ..sort(
-              (a, b) =>
-                  _onwardMoves(a, visited).compareTo(_onwardMoves(b, visited)),
-            );
+      final nextCells = Direction.values
+          .map((d) => current.offset(d.dr, d.dc))
+          .where((next) =>
+              _state.maze.isValid(next) &&
+              !_rubbleCells.contains(next) &&
+              !lockedFor(next, visited) &&
+              !visited.contains(next))
+          .toList()
+        ..sort((a, b) =>
+            _onwardMoves(a, visited).compareTo(_onwardMoves(b, visited)));
 
       for (final next in nextCells) {
         final wouldFinish = path.length + 1 == _state.maze.totalCells;
@@ -876,17 +868,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     if (dfs(_state.head)) return [...path];
 
-    final fallback =
-        Direction.values
-            .map((d) => _state.head.offset(d.dr, d.dc))
-            .where(
-              (next) =>
-                  _state.maze.isValid(next) &&
-                  !_rubbleCells.contains(next) &&
-                  !lockedFor(next, visited) &&
-                  !visited.contains(next),
-            )
-            .toList();
+    final fallback = Direction.values
+        .map((d) => _state.head.offset(d.dr, d.dc))
+        .where((next) =>
+            _state.maze.isValid(next) &&
+            !_rubbleCells.contains(next) &&
+            !lockedFor(next, visited) &&
+            !visited.contains(next))
+        .toList();
     if (fallback.isEmpty) return null;
     return [..._state.path, fallback.first];
   }
@@ -894,25 +883,23 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   int _onwardMoves(Cell cell, Set<Cell> visited) {
     return Direction.values
         .map((d) => cell.offset(d.dr, d.dc))
-        .where(
-          (next) =>
-              _state.maze.isValid(next) &&
-              !_rubbleCells.contains(next) &&
-              !(_keyCells.any((key) => !visited.contains(key)) &&
-                  _gateCells.contains(next)) &&
-              !visited.contains(next),
-        )
+        .where((next) =>
+            _state.maze.isValid(next) &&
+            !_rubbleCells.contains(next) &&
+            !(_keyCells.any((key) => !visited.contains(key)) &&
+                _gateCells.contains(next)) &&
+            !visited.contains(next))
         .length;
   }
 
   Future<void> _saveWin(int moves) async {
     if (widget.endless) {
       final seconds = DateTime.now().difference(_startedAt).inSeconds;
-      unawaited(
-        ref
-            .read(leaderboardServiceProvider)
-            .submitEndlessScore(stage: _level, moves: moves, seconds: seconds),
-      );
+      unawaited(ref.read(leaderboardServiceProvider).submitEndlessScore(
+            stage: _level,
+            moves: moves,
+            seconds: seconds,
+          ));
       return;
     }
     if (_state.maze.isCustom || _state.maze.isDaily) return;
@@ -922,74 +909,69 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     await saveCompletedLevelFallback(uid: uid, levelNumber: _level);
     if (isar != null) {
       await isar.writeTxn(() async {
-        final existing =
-            await isar.levelProgress
-                .filter()
-                .uidEqualTo(uid)
-                .levelNumberEqualTo(_level)
-                .findFirst();
-        final record =
-            existing ??
+        final existing = await isar.levelProgress
+            .filter()
+            .uidEqualTo(uid)
+            .levelNumberEqualTo(_level)
+            .findFirst();
+        final record = existing ??
             LevelProgress.create(uid: uid, levelNumber: _level, moves: moves);
         record
           ..completed = true
-          ..bestMoves =
-              existing == null
-                  ? moves
-                  : (moves < existing.bestMoves ? moves : existing.bestMoves)
+          ..bestMoves = existing == null
+              ? moves
+              : (moves < existing.bestMoves ? moves : existing.bestMoves)
           ..playCount = (existing?.playCount ?? 0) + 1
           ..completedAt = DateTime.now();
         await isar.levelProgress.put(record);
       });
     }
     ref.invalidate(completedLevelsProvider);
-    unawaited(
-      ref
-          .read(leaderboardServiceProvider)
-          .submitLevelScore(level: _level, moves: moves, seconds: seconds),
-    );
+    unawaited(ref.read(leaderboardServiceProvider).submitLevelScore(
+          level: _level,
+          moves: moves,
+          seconds: seconds,
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = ref.watch(activeThemeProvider);
     final settings = ref.watch(settingsProvider).valueOrNull;
-    final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final progress = (_state.progressPercent * 100).round();
-    final visibleHints =
-        settings?.premiumUnlocked == true
-            ? 99
-            : _hintsLeft + (settings?.totalHints ?? 0);
+    final visibleHints = settings?.premiumUnlocked == true
+        ? 99
+        : _hintsLeft + (settings?.totalHints ?? 0);
     final media = MediaQuery.of(context);
     final isLandscape = media.size.width > media.size.height;
     final wideLayout = isLandscape && media.size.width >= 700;
-    const controlsReserve = 178.0;
+    const controlsReserve = 218.0;
 
     Widget missionPanel() => AnimatedSwitcher(
-      duration: const Duration(milliseconds: 240),
-      child: _MissionPanel(
-        key: ValueKey('$_levelFlavor-$progress-$_flowStreak'),
-        moves: _state.moveCount,
-        progress: progress,
-        goalTitle: _goalTitle,
-        goalProgress: _goalProgress,
-        hintsLeft: visibleHints,
-        flowStreak: _flowStreak,
-        shields: _shields,
-        keysLeft: _keyCells.length,
-        rewindCards: _rewindsLeft,
-        freezeCards: _freezeCardsLeft,
-        cleanseCards: _cleanseCardsLeft,
-        flavor: _levelFlavor,
-        remainingSeconds: _hasTimer ? _remainingSeconds : null,
-        enemyActive: _hasEnemy || _isBossLevel,
-        onHint: _useHint,
-        onRewind: _useRewindCard,
-        onFreeze: _useFreezeCard,
-        onCleanse: _useCleanseCard,
-      ),
-    );
+          duration: const Duration(milliseconds: 240),
+          child: _MissionPanel(
+            key: ValueKey('$_levelFlavor-$progress-$_flowStreak'),
+            moves: _state.moveCount,
+            progress: progress,
+            goalTitle: _goalTitle,
+            goalProgress: _goalProgress,
+            hintsLeft: visibleHints,
+            flowStreak: _flowStreak,
+            shields: _shields,
+            keysLeft: _keyCells.length,
+            rewindCards: _rewindsLeft,
+            freezeCards: _freezeCardsLeft,
+            cleanseCards: _cleanseCardsLeft,
+            flavor: _levelFlavor,
+            remainingSeconds: _hasTimer ? _remainingSeconds : null,
+            enemyActive: _hasEnemy || _isBossLevel,
+            onHint: _useHint,
+            onRewind: _useRewindCard,
+            onFreeze: _useFreezeCard,
+            onCleanse: _useCleanseCard,
+          ),
+        );
 
     Widget mazeBoard({double maxSide = 780, bool expanded = true}) {
       final board = Stack(
@@ -998,11 +980,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           Center(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final side =
-                    math
-                        .min(constraints.maxWidth, constraints.maxHeight)
-                        .clamp(150.0, maxSide)
-                        .toDouble();
+                final side = math
+                    .min(constraints.maxWidth, constraints.maxHeight)
+                    .clamp(150.0, maxSide)
+                    .toDouble();
                 return MazeGestureHandler(
                   onMove: _move,
                   child: AnimatedScale(
@@ -1044,31 +1025,41 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ),
           Positioned(
             top: 8,
-            child: _FeedbackBurst(text: _feedbackText, color: _feedbackColor),
+            child: _FeedbackBurst(
+              text: _feedbackText,
+              color: _feedbackColor,
+            ),
           ),
         ],
       );
       return expanded ? Expanded(child: board) : board;
     }
 
-    Widget controlsPanel({bool compact = false}) => DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.surface.withOpacity(0.96),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: scheme.outline.withOpacity(0.12)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.14),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+    Widget controlsPanel({bool compact = false}) => SizedBox(
+          height: compact ? 136 : 172,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1E7FF),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: const Color(0xFFB9A7D8),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.14),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(compact ? 6 : 8),
+                child: _DPad(compact: compact, onMove: _move),
+              ),
+            ),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(compact ? 6 : 8),
-        child: _DPad(compact: compact, onMove: _move),
-      ),
-    );
+        );
 
     return Scaffold(
       backgroundColor:
@@ -1094,16 +1085,21 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ),
           IconButton(
             tooltip: 'Nasıl oynanır?',
-            onPressed:
-                () => showModalBottomSheet<void>(
-                  context: context,
-                  isScrollControlled: true,
-                  showDragHandle: true,
-                  builder: (context) => const _TutorialSheet(),
-                ),
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              showDragHandle: true,
+              builder: (context) => const _TutorialSheet(),
+            ),
             icon: const Icon(Icons.help_outline_rounded),
           ),
         ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: SizedBox(
+        width: 320,
+        height: 172,
+        child: controlsPanel(),
       ),
       body: SafeArea(
         top: false,
@@ -1114,65 +1110,57 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors:
-                      isDark
-                          ? const [Color(0xFF111827), Color(0xFF020617)]
-                          : const [Color(0xFFFFFFFF), Color(0xFFEFF6FF)],
+                  colors: isDark
+                      ? const [Color(0xFF111827), Color(0xFF020617)]
+                      : const [Color(0xFFFFFFFF), Color(0xFFEFF6FF)],
                 ),
               ),
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: controlsReserve),
-                      child:
-                          wideLayout
-                              ? Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  12,
-                                  8,
-                                  12,
-                                  8,
-                                ),
-                                child: Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 292,
-                                      child: SingleChildScrollView(
-                                        child: missionPanel(),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    mazeBoard(maxSide: 620),
-                                  ],
-                                ),
-                              )
-                              : Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 6,
-                                    ),
-                                    child: missionPanel(),
-                                  ),
-                                  mazeBoard(maxSide: 520),
-                                ],
-                              ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 8,
-                    child: SafeArea(
-                      top: false,
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 320),
-                          child: controlsPanel(),
+                    child: IgnorePointer(
+                      child: CustomPaint(
+                        painter: _GameAtmospherePainter(
+                          pulse: _pulseValue,
+                          accent: _stageAccent,
+                          danger: (_hasTimer && _remainingSeconds <= 8) ||
+                              _isBossLevel,
+                          flow: _flowStreak,
                         ),
                       ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: controlsReserve),
+                      child: wideLayout
+                          ? Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 292,
+                                    child: SingleChildScrollView(
+                                      child: missionPanel(),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  mazeBoard(maxSide: 620),
+                                ],
+                              ),
+                            )
+                          : Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
+                                  child: missionPanel(),
+                                ),
+                                mazeBoard(maxSide: 520),
+                              ],
+                            ),
                     ),
                   ),
                 ],
@@ -1182,6 +1170,63 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ),
       ),
     );
+  }
+}
+
+class _GameAtmospherePainter extends CustomPainter {
+  final double pulse;
+  final Color accent;
+  final bool danger;
+  final int flow;
+
+  const _GameAtmospherePainter({
+    required this.pulse,
+    required this.accent,
+    required this.danger,
+    required this.flow,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final energy = (flow / 18).clamp(0.0, 1.0);
+    final alpha = danger ? 0.18 : 0.10 + energy * 0.08;
+    final yBase = size.height * (0.18 + pulse * 0.08);
+
+    paint
+      ..color = accent.withOpacity(alpha)
+      ..strokeWidth = 2.0 + energy * 2.0;
+    for (var i = 0; i < 4; i++) {
+      final y = yBase + i * size.height * 0.18;
+      final start = Offset(-size.width * 0.12, y);
+      final end = Offset(size.width * 1.12, y + size.height * 0.10);
+      canvas.drawLine(start, end, paint);
+    }
+
+    paint
+      ..color = (danger ? const Color(0xFFEF4444) : accent).withOpacity(0.12)
+      ..strokeWidth = 1.2;
+    final inset = 18.0 + pulse * 8.0;
+    final rect = Rect.fromLTWH(
+      inset,
+      inset,
+      math.max(0, size.width - inset * 2),
+      math.max(0, size.height - inset * 2),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(28)),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _GameAtmospherePainter oldDelegate) {
+    return oldDelegate.pulse != pulse ||
+        oldDelegate.accent != accent ||
+        oldDelegate.danger != danger ||
+        oldDelegate.flow != flow;
   }
 }
 
@@ -1207,35 +1252,32 @@ class _FeedbackBurst extends StatelessWidget {
             child: FadeTransition(opacity: animation, child: child),
           );
         },
-        child:
-            text == null
-                ? const SizedBox.shrink()
-                : Container(
-                  key: ValueKey(text),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.92),
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withOpacity(0.28),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    text!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
+        child: text == null
+            ? const SizedBox.shrink()
+            : Container(
+                key: ValueKey(text),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.92),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.28),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
                     ),
+                  ],
+                ),
+                child: Text(
+                  text!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
+              ),
       ),
     );
   }
@@ -1308,8 +1350,8 @@ class _MissionPanel extends StatelessWidget {
                 enemyActive
                     ? Icons.warning_amber_rounded
                     : remainingSeconds != null
-                    ? Icons.timer_rounded
-                    : Icons.auto_awesome_rounded,
+                        ? Icons.timer_rounded
+                        : Icons.auto_awesome_rounded,
                 size: 18,
                 color: enemyActive ? const Color(0xFFEF4444) : scheme.primary,
               ),
@@ -1324,10 +1366,9 @@ class _MissionPanel extends StatelessWidget {
                 Text(
                   '${remainingSeconds}s',
                   style: TextStyle(
-                    color:
-                        remainingSeconds! <= 8
-                            ? const Color(0xFFEF4444)
-                            : scheme.primary,
+                    color: remainingSeconds! <= 8
+                        ? const Color(0xFFEF4444)
+                        : scheme.primary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -1432,11 +1473,10 @@ class _WinSummary extends StatelessWidget {
       tween: Tween(begin: 0.88, end: 1),
       duration: const Duration(milliseconds: 360),
       curve: Curves.easeOutBack,
-      builder:
-          (context, scale, child) => Transform.scale(
-            scale: scale,
-            child: Opacity(opacity: scale.clamp(0.0, 1.0), child: child),
-          ),
+      builder: (context, scale, child) => Transform.scale(
+        scale: scale,
+        child: Opacity(opacity: scale.clamp(0.0, 1.0), child: child),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1452,10 +1492,8 @@ class _WinSummary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            '$moves hamle',
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
+          Text('$moves hamle',
+              style: const TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
@@ -1466,10 +1504,8 @@ class _WinSummary extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.monetization_on_rounded,
-                  color: Color(0xFFF59E0B),
-                ),
+                const Icon(Icons.monetization_on_rounded,
+                    color: Color(0xFFF59E0B)),
                 const SizedBox(width: 6),
                 Text('+$reward jeton  ·  Toplam $coins'),
               ],
@@ -1512,10 +1548,9 @@ class _HintPill extends StatelessWidget {
       child: Column(
         children: [
           Material(
-            color:
-                count > 0
-                    ? const Color(0xFFFFF7D6)
-                    : scheme.surfaceContainerHighest,
+            color: count > 0
+                ? const Color(0xFFFFF7D6)
+                : scheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               onTap: onTap,
@@ -1536,10 +1571,9 @@ class _HintPill extends StatelessWidget {
                       '$count',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color:
-                            count > 0
-                                ? const Color(0xFF92400E)
-                                : scheme.outline,
+                        color: count > 0
+                            ? const Color(0xFF92400E)
+                            : scheme.outline,
                       ),
                     ),
                   ],
@@ -1614,10 +1648,9 @@ class _CardPill extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         child: Material(
-          color:
-              enabled
-                  ? scheme.primaryContainer.withOpacity(0.7)
-                  : scheme.surfaceContainerHighest,
+          color: enabled
+              ? scheme.primaryContainer.withOpacity(0.7)
+              : scheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
             onTap: enabled ? onTap : null,
@@ -1664,7 +1697,11 @@ class _KeyPill extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          const Icon(Icons.key_rounded, size: 22, color: Color(0xFF0EA5E9)),
+          const Icon(
+            Icons.key_rounded,
+            size: 22,
+            color: Color(0xFF0EA5E9),
+          ),
           const SizedBox(height: 2),
           Text(
             'x$count',
@@ -1715,7 +1752,10 @@ class _DPad extends StatelessWidget {
   final bool compact;
   final ValueChanged<Direction> onMove;
 
-  const _DPad({this.compact = false, required this.onMove});
+  const _DPad({
+    this.compact = false,
+    required this.onMove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1724,31 +1764,27 @@ class _DPad extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _MoveButton(
-          compact: compact,
-          icon: Icons.keyboard_arrow_up_rounded,
-          onTap: () => onMove(Direction.up),
-        ),
+            compact: compact,
+            icon: Icons.keyboard_arrow_up_rounded,
+            onTap: () => onMove(Direction.up)),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _MoveButton(
-              compact: compact,
-              icon: Icons.keyboard_arrow_left_rounded,
-              onTap: () => onMove(Direction.left),
-            ),
+                compact: compact,
+                icon: Icons.keyboard_arrow_left_rounded,
+                onTap: () => onMove(Direction.left)),
             SizedBox(width: gap),
             _MoveButton(
-              compact: compact,
-              icon: Icons.keyboard_arrow_right_rounded,
-              onTap: () => onMove(Direction.right),
-            ),
+                compact: compact,
+                icon: Icons.keyboard_arrow_right_rounded,
+                onTap: () => onMove(Direction.right)),
           ],
         ),
         _MoveButton(
-          compact: compact,
-          icon: Icons.keyboard_arrow_down_rounded,
-          onTap: () => onMove(Direction.down),
-        ),
+            compact: compact,
+            icon: Icons.keyboard_arrow_down_rounded,
+            onTap: () => onMove(Direction.down)),
       ],
     );
   }
@@ -1795,10 +1831,10 @@ class _MoveButtonState extends State<_MoveButton> {
             width: width,
             height: height,
             decoration: BoxDecoration(
-              color: _pressed ? scheme.primary : const Color(0xFF7C3AED),
+              color: _pressed ? scheme.primary : const Color(0xFFE9D5FF),
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
-                color: Colors.white.withOpacity(_pressed ? 0.45 : 0.30),
+                color: const Color(0xFF6D5A8D).withOpacity(0.16),
               ),
               boxShadow: [
                 if (!_pressed)
@@ -1812,7 +1848,7 @@ class _MoveButtonState extends State<_MoveButton> {
             child: Icon(
               widget.icon,
               size: widget.compact ? 32 : 36,
-              color: Colors.white,
+              color: _pressed ? Colors.white : const Color(0xFF6D5A8D),
             ),
           ),
         ),
@@ -1827,71 +1863,76 @@ class _TutorialSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Nasıl oynanır?',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                color: scheme.onSurface,
+    return FractionallySizedBox(
+      heightFactor: 0.9,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 4, 22, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Nasıl oynanır?',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: scheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Geç'),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            const _TutorialDemo(),
-            const SizedBox(height: 12),
-            const _TutorialLine(
-              icon: Icons.grid_on_rounded,
-              title: 'Her açık kareden geç',
-              text: 'Boş karelerin tamamını tek rota halinde dolaş.',
-            ),
-            const _TutorialLine(
-              icon: Icons.flag_rounded,
-              title: 'Turuncu HEDEF en son',
-              text:
-                  'Hedefe erken girersen bölüm bitmez. Önce tüm alanı doldur.',
-            ),
-            const _TutorialLine(
-              icon: Icons.touch_app_rounded,
-              title: 'Kaydır veya yön tuşlarını kullan',
-              text:
-                  'Alttaki büyük tuşların tamamı basılabilir alan; kaydırma da çalışır.',
-            ),
-            const _TutorialLine(
-              icon: Icons.lightbulb_rounded,
-              title: 'İpucu jokeri',
-              text:
-                  'Başlangıçta 3 ipucun var. İpucu önerilen kareyi sarı gösterir.',
-            ),
-            const _TutorialLine(
-              icon: Icons.shield_rounded,
-              title: 'Kalkan ve takip',
-              text:
-                  'Kirmizi takipci yakalarsa once kalkanin kirilir. Kalkansiz yakalanirsan birkac adim geri savrulursun.',
-            ),
-            const _TutorialLine(
-              icon: Icons.warning_amber_rounded,
-              title: 'Catlak karelere dikkat',
-              text:
-                  'Catlak kareler patlayip bolumun ritmini degistirir. Yildizlar ekstra kalkan kazandirabilir.',
-            ),
-            const _TutorialLine(
-              icon: Icons.key_rounded,
-              title: 'Anahtarli kilitler',
-              text:
-                  'Mavi kilitli karelere ve hedefe girmeden once anahtarlari toplaman gerekir.',
-            ),
-            const SizedBox(height: 14),
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Başla'),
-            ),
-          ],
+              const SizedBox(height: 8),
+              const _TutorialDemo(),
+              const SizedBox(height: 10),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    children: const [
+                      _TutorialLine(
+                        icon: Icons.grid_on_rounded,
+                        title: 'Tüm kareleri boya',
+                        text:
+                            'Mor rotayı açık karelerin tamamından geçir. Aynı kareye geri dönme.',
+                      ),
+                      _TutorialLine(
+                        icon: Icons.flag_rounded,
+                        title: 'HEDEF en son',
+                        text:
+                            'Turuncu hedefe erken girme. Önce alanı doldur, sonra hedefe ulaş.',
+                      ),
+                      _TutorialLine(
+                        icon: Icons.touch_app_rounded,
+                        title: 'Kaydır veya yön tuşlarını kullan',
+                        text:
+                            'Alttaki yön tuşları ve ekranda kaydırma aynı şekilde çalışır.',
+                      ),
+                      _TutorialLine(
+                        icon: Icons.lightbulb_rounded,
+                        title: 'Takılırsan ipucu al',
+                        text:
+                            'İpucu önerilen kareyi gösterir. Sonraki bölümlerde anahtar, tuzak ve takip gelir.',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              FilledButton.icon(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: const Text('Başla'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2011,15 +2052,12 @@ class _TutorialLine extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
+                Text(title,
+                    style: const TextStyle(fontWeight: FontWeight.w800)),
                 const SizedBox(height: 2),
-                Text(
-                  text,
-                  style: TextStyle(color: scheme.onSurface.withOpacity(0.65)),
-                ),
+                Text(text,
+                    style:
+                        TextStyle(color: scheme.onSurface.withOpacity(0.65))),
               ],
             ),
           ),
