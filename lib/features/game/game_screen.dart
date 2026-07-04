@@ -182,6 +182,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       if (_enemy == _state.head) {
         _handleEnemyCatch();
       }
+      if (_hasTimer && !_timeFrozen && _remainingSeconds <= 0) {
+        _handleTimeExpired();
+      }
     });
   }
 
@@ -229,7 +232,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   String get _goalTitle => switch (_goal) {
         _LevelGoal.keyExit => 'Anahtarlarla cikisa ulas',
         _LevelGoal.crystalOrder => 'Kristalleri sirayla topla',
-        _LevelGoal.noTrap => 'Tuzaga basmadan bitir',
+        _LevelGoal.noTrap => 'Tuzaklardan kac',
         _LevelGoal.boss => 'Boss baskisindan kac',
         _LevelGoal.fillAll => 'Tum kareleri boya',
       };
@@ -460,6 +463,37 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
   }
 
+  void _handleTimeExpired() {
+    if (!_hasTimer || _timeFrozen || _state.isWon) return;
+    HapticFeedback.heavyImpact();
+    final blockedByShield = _shields > 0;
+    setState(() {
+      _flowStreak = 0;
+      _blastCell = _state.head;
+      _elapsedSeconds = math.max(0, _timeTarget - 6);
+      if (blockedByShield) {
+        _shields--;
+        _levelFlavor = 'Sure kalkani kirdi';
+      } else {
+        final keepCount = math.max(1, _state.path.length - 3);
+        _state = _state.copyWith(
+          path: _state.path.take(keepCount).toList(),
+          moveCount: _state.moveCount + 1,
+          hintPath: const [],
+          history: const [],
+        );
+        _levelFlavor = 'Sure doldu';
+      }
+    });
+    _showFeedback(
+      blockedByShield ? 'SURE DOLDU' : 'GERI SARILDIN',
+      const Color(0xFFEF4444),
+    );
+    Future.delayed(const Duration(milliseconds: 650), () {
+      if (mounted) setState(() => _blastCell = null);
+    });
+  }
+
   void _triggerTrap(Cell cell) {
     HapticFeedback.heavyImpact();
     final blockedByShield = _shields > 0;
@@ -515,7 +549,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     return switch (_goal) {
       _LevelGoal.keyExit => _keyCells.isEmpty,
       _LevelGoal.crystalOrder => _crystalIndex >= _crystalRoute.length,
-      _LevelGoal.boss => _keyCells.isEmpty,
+      _LevelGoal.boss => true,
       _LevelGoal.noTrap || _LevelGoal.fillAll => true,
     };
   }
