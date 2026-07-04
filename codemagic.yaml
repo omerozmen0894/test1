@@ -44,7 +44,7 @@ workflows:
           flutter clean
           rm -f .flutter-plugins .flutter-plugins-dependencies
           flutter pub get
-      - name: Patch Firebase Database iOS imports
+      - name: Patch Firebase iOS modular imports
         script: |
           set -euo pipefail
           python3 - <<'PY'
@@ -55,27 +55,33 @@ workflows:
               Path("ios/.symlinks/plugins"),
           ]
           old = "#import <Firebase/Firebase.h>"
-          new = "#import <FirebaseCore/FirebaseCore.h>\n#import <FirebaseDatabase/FirebaseDatabase.h>"
+          package_imports = {
+              "firebase_database": "#import <FirebaseCore/FirebaseCore.h>\n#import <FirebaseDatabase/FirebaseDatabase.h>",
+              "firebase_auth": "#import <FirebaseCore/FirebaseCore.h>\n#import <FirebaseAuth/FirebaseAuth.h>",
+              "cloud_firestore": "#import <FirebaseCore/FirebaseCore.h>\n#import <FirebaseFirestore/FirebaseFirestore.h>",
+          }
           patched = False
 
           for root in roots:
               if not root.exists():
                   continue
-              for package in root.glob("firebase_database*"):
-                  classes = package / "ios" / "Classes"
-                  if not classes.exists():
-                      continue
-                  for path in list(classes.glob("*.h")) + list(classes.glob("*.m")):
-                      text = path.read_text()
-                      if old not in text:
+              for package_name, new in package_imports.items():
+                  packages = list(root.glob(f"{package_name}*"))
+                  for package in packages:
+                      classes = package / "ios" / "Classes"
+                      if not classes.exists():
                           continue
-                      path.chmod(path.stat().st_mode | 0o200)
-                      path.write_text(text.replace(old, new))
-                      print(f"Patched Firebase Database import in {path}")
-                      patched = True
+                      for path in list(classes.rglob("*.h")) + list(classes.rglob("*.m")):
+                          text = path.read_text()
+                          if old not in text:
+                              continue
+                          path.chmod(path.stat().st_mode | 0o200)
+                          path.write_text(text.replace(old, new))
+                          print(f"Patched {package_name} modular import in {path}")
+                          patched = True
 
           if not patched:
-              raise SystemExit("Firebase Database iOS import patch target was not found.")
+              raise SystemExit("Firebase iOS modular import patch target was not found.")
           PY
       - name: Remove risky native plugins from iOS plugin list
         script: |
