@@ -78,15 +78,18 @@ workflows:
           cd ..
           cd ios
           pod install --repo-update
-      - name: Patch gRPC-Core for Xcode
+      - name: Patch gRPC for Xcode
         script: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
 
-          candidates = list(Path("ios/Pods").glob("**/gRPC-Core/src/core/lib/promise/detail/basic_seq.h"))
+          candidates = [
+              path for path in Path("ios/Pods").glob("**/src/core/lib/promise/detail/basic_seq.h")
+              if "gRPC" in str(path)
+          ]
           if not candidates:
-              raise SystemExit("gRPC-Core basic_seq.h was not found after pod install.")
+              raise SystemExit("gRPC basic_seq.h was not found after pod install.")
 
           old = "Traits::template CallSeqFactory(f_, *cur_, std::move(arg))"
           new = "Traits::template CallSeqFactory<>(f_, *cur_, std::move(arg))"
@@ -104,7 +107,7 @@ workflows:
                   patched = True
 
           if not patched:
-              raise SystemExit("gRPC-Core patch target line was not found.")
+              raise SystemExit("gRPC patch target line was not found.")
           PY
       - name: Disable risky native registration on iOS
         script: |
