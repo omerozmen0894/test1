@@ -46,64 +46,66 @@ class LeaderboardService {
     required int moves,
     required int seconds,
   }) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
 
-    final userRef = _firestore.collection('leaderboard').doc(user.uid);
-    await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(userRef);
-      final data = snap.data() ?? {};
-      final bestLevel = (data['bestLevel'] as num?)?.toInt() ?? 0;
-      final totalCompleted = (data['totalCompleted'] as num?)?.toInt() ?? 0;
-      final bestMovesByLevel =
-          Map<String, dynamic>.from(data['bestMovesByLevel'] as Map? ?? {});
-      final oldMoves = (bestMovesByLevel['$level'] as num?)?.toInt();
-      final isNewLevel = oldMoves == null;
-      final isBetter = oldMoves == null || moves < oldMoves;
-      if (isBetter) bestMovesByLevel['$level'] = moves;
+      final userRef = _firestore.collection('leaderboard').doc(user.uid);
+      await _firestore.runTransaction((txn) async {
+        final snap = await txn.get(userRef);
+        final data = snap.data() ?? {};
+        final bestLevel = (data['bestLevel'] as num?)?.toInt() ?? 0;
+        final totalCompleted = (data['totalCompleted'] as num?)?.toInt() ?? 0;
+        final bestMovesByLevel =
+            Map<String, dynamic>.from(data['bestMovesByLevel'] as Map? ?? {});
+        final oldMoves = (bestMovesByLevel['$level'] as num?)?.toInt();
+        final isNewLevel = oldMoves == null;
+        final isBetter = oldMoves == null || moves < oldMoves;
+        if (isBetter) bestMovesByLevel['$level'] = moves;
 
-      txn.set(
-          userRef,
-          {
-            'uid': user.uid,
-            'displayName': user.displayName?.trim().isNotEmpty == true
-                ? user.displayName
-                : 'Oyuncu',
-            'bestLevel': level > bestLevel ? level : bestLevel,
-            'totalCompleted': totalCompleted + (isNewLevel ? 1 : 0),
-            'bestMovesByLevel': bestMovesByLevel,
-            'lastLevel': level,
-            'lastMoves': moves,
-            'lastSeconds': seconds,
-            'updatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true));
-    });
+        txn.set(
+            userRef,
+            {
+              'uid': user.uid,
+              'displayName': user.displayName?.trim().isNotEmpty == true
+                  ? user.displayName
+                  : 'Oyuncu',
+              'bestLevel': level > bestLevel ? level : bestLevel,
+              'totalCompleted': totalCompleted + (isNewLevel ? 1 : 0),
+              'bestMovesByLevel': bestMovesByLevel,
+              'lastLevel': level,
+              'lastMoves': moves,
+              'lastSeconds': seconds,
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
+      });
 
-    await _firestore.collection('level_scores').add({
-      'uid': user.uid,
-      'displayName': user.displayName?.trim().isNotEmpty == true
-          ? user.displayName
-          : 'Oyuncu',
-      'level': level,
-      'moves': moves,
-      'seconds': seconds,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+      await _firestore.collection('level_scores').add({
+        'uid': user.uid,
+        'displayName': user.displayName?.trim().isNotEmpty == true
+            ? user.displayName
+            : 'Oyuncu',
+        'level': level,
+        'moves': moves,
+        'seconds': seconds,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
-    for (final period in LeaderboardPeriod.values) {
-      try {
-        await _submitPeriodLevelScore(
-          period: period,
-          user: user,
-          level: level,
-          moves: moves,
-          seconds: seconds,
-        );
-      } catch (_) {
-        // Period tables need the latest Firestore rules. Keep the main score safe.
+      for (final period in LeaderboardPeriod.values) {
+        try {
+          await _submitPeriodLevelScore(
+            period: period,
+            user: user,
+            level: level,
+            moves: moves,
+            seconds: seconds,
+          );
+        } catch (_) {
+          // Period tables need the latest Firestore rules. Keep the main score safe.
+        }
       }
-    }
+    } catch (_) {}
   }
 
   Future<void> submitEndlessScore({
@@ -111,33 +113,36 @@ class LeaderboardService {
     required int moves,
     required int seconds,
   }) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
 
-    final userRef = _firestore.collection('endless_leaderboard').doc(user.uid);
-    await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(userRef);
-      final data = snap.data() ?? {};
-      final bestStage = (data['bestStage'] as num?)?.toInt() ?? 0;
-      final bestMoves = (data['bestMoves'] as num?)?.toInt() ?? 999999;
-      final isBetter =
-          stage > bestStage || (stage == bestStage && moves < bestMoves);
-      if (!isBetter) return;
+      final userRef =
+          _firestore.collection('endless_leaderboard').doc(user.uid);
+      await _firestore.runTransaction((txn) async {
+        final snap = await txn.get(userRef);
+        final data = snap.data() ?? {};
+        final bestStage = (data['bestStage'] as num?)?.toInt() ?? 0;
+        final bestMoves = (data['bestMoves'] as num?)?.toInt() ?? 999999;
+        final isBetter =
+            stage > bestStage || (stage == bestStage && moves < bestMoves);
+        if (!isBetter) return;
 
-      txn.set(
-          userRef,
-          {
-            'uid': user.uid,
-            'displayName': user.displayName?.trim().isNotEmpty == true
-                ? user.displayName
-                : 'Oyuncu',
-            'bestStage': stage,
-            'bestMoves': moves,
-            'bestSeconds': seconds,
-            'updatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true));
-    });
+        txn.set(
+            userRef,
+            {
+              'uid': user.uid,
+              'displayName': user.displayName?.trim().isNotEmpty == true
+                  ? user.displayName
+                  : 'Oyuncu',
+              'bestStage': stage,
+              'bestMoves': moves,
+              'bestSeconds': seconds,
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
+      });
+    } catch (_) {}
   }
 
   Future<void> _submitPeriodLevelScore({

@@ -5,12 +5,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'core/database/progress_model.dart';
+import 'core/localization/app_localizations.dart';
 import 'core/providers/firebase_status_provider.dart';
 import 'core/providers/isar_provider.dart';
 import 'core/services/ad_service.dart';
@@ -112,9 +114,18 @@ class _AppState extends ConsumerState<_App> {
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = ref.watch(languageCodeProvider);
     return MaterialApp(
       title: 'Wrap Maze',
       debugShowCheckedModeBanner: false,
+      locale: languageCode == null ? null : Locale(languageCode),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
       themeMode: ThemeMode.system,
       theme: _theme(Brightness.light),
       darkTheme: _theme(Brightness.dark),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/localization/app_localizations.dart';
 import '../../core/providers/firebase_status_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/services/auth_service.dart';
@@ -15,13 +16,17 @@ class AuthGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final firebaseReady = ref.watch(firebaseReadyProvider);
-    if (!firebaseReady) return const FirebaseSetupScreen();
+    final offlineMode = ref.watch(offlineModeProvider);
+    if (!firebaseReady || offlineMode) {
+      return _UserProgressScope(uid: 'local', child: const HomeScreen());
+    }
 
     final authState = ref.watch(authStateProvider);
     return authState.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, _) => AuthScreen(initialError: '$error'),
+      error: (error, _) =>
+          _UserProgressScope(uid: 'local', child: const HomeScreen()),
       data: (user) => user == null
           ? const AuthScreen()
           : _UserProgressScope(uid: user.uid, child: const HomeScreen()),
@@ -226,6 +231,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final service = ref.read(authServiceProvider);
 
@@ -248,7 +254,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900),
                   ),
                   Text(
-                    'Gercek oyuncularla yarismak icin giris yap.',
+                    l10n.t('sign_in_pitch'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: scheme.onSurface.withOpacity(0.62)),
                   ),
@@ -261,10 +267,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             padding: const EdgeInsets.only(bottom: 12),
                             child: TextField(
                               controller: _nameCtrl,
-                              decoration: const InputDecoration(
-                                labelText: 'Oyuncu adi',
-                                prefixIcon: Icon(Icons.person_rounded),
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                labelText: l10n.t('player_name'),
+                                prefixIcon: const Icon(Icons.person_rounded),
+                                border: const OutlineInputBorder(),
                               ),
                             ),
                           )
@@ -273,20 +279,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   TextField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'E-posta',
-                      prefixIcon: Icon(Icons.mail_rounded),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.t('email'),
+                      prefixIcon: const Icon(Icons.mail_rounded),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _passwordCtrl,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Sifre',
-                      prefixIcon: Icon(Icons.lock_rounded),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.t('password'),
+                      prefixIcon: const Icon(Icons.lock_rounded),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -310,12 +316,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   email: _emailCtrl.text,
                                   name: _nameCtrl.text,
                                 );
+                                await ref
+                                    .read(offlineModeProvider.notifier)
+                                    .setOfflineMode(false);
                               } else {
                                 await service.signInWithEmail(
                                   email: _emailCtrl.text,
                                   password: _passwordCtrl.text,
                                 );
                                 await _rememberLogin(email: _emailCtrl.text);
+                                await ref
+                                    .read(offlineModeProvider.notifier)
+                                    .setOfflineMode(false);
                               }
                             }),
                     child: _loading
@@ -324,14 +336,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(_isRegister ? 'Kayit ol' : 'Giris yap'),
+                        : Text(_isRegister
+                            ? l10n.t('register')
+                            : l10n.t('sign_in')),
                   ),
                   if (!_isRegister)
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: _loading ? null : _sendPasswordReset,
-                        child: const Text('Sifremi unuttum'),
+                        child: Text(l10n.t('forgot_password')),
                       ),
                     ),
                   TextButton(
@@ -339,8 +353,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         ? null
                         : () => setState(() => _isRegister = !_isRegister),
                     child: Text(_isRegister
-                        ? 'Zaten hesabim var'
-                        : 'Yeni hesap olustur'),
+                        ? l10n.t('have_account')
+                        : l10n.t('new_account')),
                   ),
                   const Divider(height: 28),
                   OutlinedButton.icon(
@@ -350,9 +364,36 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               await service.signInAnonymously(
                                   displayName: _nameCtrl.text);
                               await _rememberLogin(name: _nameCtrl.text);
+                              await ref
+                                  .read(offlineModeProvider.notifier)
+                                  .setOfflineMode(false);
                             }),
                     icon: const Icon(Icons.person_outline_rounded),
-                    label: const Text('Misafir olarak gir'),
+                    label: Text(l10n.t('guest')),
+                  ),
+                  const SizedBox(height: 10),
+                  FilledButton.tonalIcon(
+                    onPressed: _loading
+                        ? null
+                        : () async {
+                            await _rememberLogin(name: _nameCtrl.text);
+                            await ref
+                                .read(offlineModeProvider.notifier)
+                                .setOfflineMode(true);
+                          },
+                    icon: const Icon(Icons.wifi_off_rounded),
+                    label: Text(l10n.t('offline_play')),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      l10n.t('offline_note'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: scheme.onSurface.withOpacity(0.56),
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ],
               ),

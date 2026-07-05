@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:isar/isar.dart';
 
 import '../../core/database/progress_model.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/models/theme_model.dart';
 import '../../core/providers/isar_provider.dart';
 import '../../core/providers/settings_provider.dart';
@@ -17,10 +18,13 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final user = ref.watch(authStateProvider).valueOrNull;
+    final l10n = context.l10n;
+    final offlineMode = ref.watch(offlineModeProvider);
+    final languageCode = ref.watch(languageCodeProvider) ?? 'system';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ayarlar'),
+        title: Text(l10n.t('settings')),
         centerTitle: true,
       ),
       body: settings.when(
@@ -38,9 +42,23 @@ class SettingsScreen extends ConsumerWidget {
                         ? user!.displayName!
                         : value.displayName),
                     subtitle: Text(user?.isAnonymous == true
-                        ? 'Misafir hesap'
-                        : (user?.email ?? 'E-posta yok')),
+                        ? l10n.t('guest_account')
+                        : (user?.email ?? l10n.t('no_email'))),
                   ),
+                  if (offlineMode) ...[
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.cloud_sync_rounded),
+                      title: Text(l10n.t('sign_in')),
+                      subtitle: Text(l10n.t('offline_note')),
+                      onTap: () async {
+                        await ref
+                            .read(offlineModeProvider.notifier)
+                            .setOfflineMode(false);
+                        ref.invalidate(authStateProvider);
+                      },
+                    ),
+                  ],
                   const Divider(height: 1),
                   ListTile(
                     leading: const Icon(Icons.badge_rounded),
@@ -78,7 +96,8 @@ class SettingsScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    subtitle: const Text('Hesap ve bu cihazdaki veriler silinir.'),
+                    subtitle:
+                        const Text('Hesap ve bu cihazdaki veriler silinir.'),
                     enabled: user != null,
                     onTap: user == null
                         ? null
@@ -93,20 +112,52 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
+            Card(
+              child: Column(
+                children: [
+                  RadioListTile<String>(
+                    title: Text(l10n.t('system_language')),
+                    value: 'system',
+                    groupValue: languageCode,
+                    onChanged: (value) => ref
+                        .read(languageCodeProvider.notifier)
+                        .setLanguage(value),
+                  ),
+                  RadioListTile<String>(
+                    title: Text(l10n.t('turkish')),
+                    value: 'tr',
+                    groupValue: languageCode,
+                    onChanged: (value) => ref
+                        .read(languageCodeProvider.notifier)
+                        .setLanguage(value),
+                  ),
+                  RadioListTile<String>(
+                    title: Text(l10n.t('english')),
+                    value: 'en',
+                    groupValue: languageCode,
+                    onChanged: (value) => ref
+                        .read(languageCodeProvider.notifier)
+                        .setLanguage(value),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             SwitchListTile(
-              title: const Text('Ses'),
+              title: Text(l10n.t('sound')),
               value: value.soundEnabled,
               onChanged: (v) =>
                   ref.read(settingsProvider.notifier).setSoundEnabled(v),
             ),
             SwitchListTile(
-              title: const Text('Titreşim'),
+              title: Text(l10n.t('haptics')),
               value: value.hapticsEnabled,
               onChanged: (v) =>
                   ref.read(settingsProvider.notifier).setHapticsEnabled(v),
             ),
             const SizedBox(height: 16),
-            const Text('Tema', style: TextStyle(fontWeight: FontWeight.w700)),
+            Text(l10n.t('theme'),
+                style: const TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             ...AppThemes.all.map(
               (theme) {
@@ -270,8 +321,9 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
     final scheme = Theme.of(context).colorScheme;
     final user = ref.watch(authStateProvider).valueOrNull;
     final needsPassword = user != null && !user.isAnonymous;
-    final canDelete =
-        _confirmed && !_loading && (!needsPassword || _passwordCtrl.text.trim().isNotEmpty);
+    final canDelete = _confirmed &&
+        !_loading &&
+        (!needsPassword || _passwordCtrl.text.trim().isNotEmpty);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Hesabi sil')),
@@ -299,7 +351,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
               TextField(
                 controller: _passwordCtrl,
                 obscureText: true,
-              decoration: const InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Sifre',
                   prefixIcon: Icon(Icons.lock_rounded),
                   border: OutlineInputBorder(),

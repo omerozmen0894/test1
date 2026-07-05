@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/localization/app_localizations.dart';
 import '../../core/services/streak_service.dart';
 import '../../core/services/auth_service.dart';
 import '../daily/daily_screen.dart';
@@ -24,6 +25,7 @@ class HomeScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final completedAsync = ref.watch(completedLevelsProvider);
     final user = ref.watch(authStateProvider).valueOrNull;
+    final l10n = context.l10n;
     final completed = completedAsync.valueOrNull ?? [];
     final completedSet = {for (final p in completed) p.levelNumber};
     final streakAsync = ref.watch(streakDataProvider);
@@ -43,7 +45,7 @@ class HomeScreen extends ConsumerWidget {
             child: CustomScrollView(
               key: UniqueKey(),
               slivers: [
-                // ── Header ───────────────────────────────────────────────────
+                // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -59,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Wrap Maze',
+                                l10n.t('app_title'),
                                 style: TextStyle(
                                   fontSize: isTablet ? 38 : 30,
                                   fontWeight: FontWeight.w700,
@@ -68,7 +70,7 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                               ).animate().fadeIn().slideX(begin: -0.08),
                               Text(
-                                'Sarmala · çöz · yarış',
+                                l10n.t('tagline'),
                                 style: TextStyle(
                                   fontSize: isTablet ? 17 : 14,
                                   color: scheme.onSurface.withOpacity(0.45),
@@ -80,13 +82,12 @@ class HomeScreen extends ConsumerWidget {
                         // Streak badge
                         if (streak != null && streak.currentStreak > 0)
                           GestureDetector(
-                            onTap:
-                                () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const StreakScreen(),
-                                  ),
-                                ),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const StreakScreen(),
+                              ),
+                            ),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
@@ -106,7 +107,7 @@ class HomeScreen extends ConsumerWidget {
                               child: Row(
                                 children: [
                                   const Text(
-                                    '🔥',
+                                    'ğŸ”¥',
                                     style: TextStyle(fontSize: 14),
                                   ),
                                   const SizedBox(width: 4),
@@ -124,7 +125,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         const SizedBox(width: 8),
                         PopupMenuButton<String>(
-                          tooltip: 'Menü',
+                          tooltip: l10n.t('menu'),
                           onSelected: (value) async {
                             if (value == 'settings') {
                               Navigator.push(
@@ -138,41 +139,40 @@ class HomeScreen extends ConsumerWidget {
                               await ref.read(authServiceProvider).signOut();
                             }
                           },
-                          itemBuilder:
-                              (context) => [
-                                PopupMenuItem(
-                                  enabled: false,
-                                  child: Text(
-                                    user?.displayName?.isNotEmpty == true
-                                        ? user!.displayName!
-                                        : 'Oyuncu',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              enabled: false,
+                              child: Text(
+                                user?.displayName?.isNotEmpty == true
+                                    ? user!.displayName!
+                                    : l10n.t('local_player'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
                                 ),
-                                const PopupMenuDivider(),
-                                const PopupMenuItem(
-                                  value: 'settings',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.settings_outlined),
-                                      SizedBox(width: 10),
-                                      Text('Ayarlar'),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'logout',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.logout_rounded),
-                                      SizedBox(width: 10),
-                                      Text('Çıkış yap'),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                              ),
+                            ),
+                            const PopupMenuDivider(),
+                            PopupMenuItem(
+                              value: 'settings',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.settings_outlined),
+                                  const SizedBox(width: 10),
+                                  Text(l10n.t('settings')),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'logout',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.logout_rounded),
+                                  const SizedBox(width: 10),
+                                  Text(l10n.t('logout')),
+                                ],
+                              ),
+                            ),
+                          ],
                           child: CircleAvatar(
                             radius: 19,
                             backgroundColor: scheme.primaryContainer,
@@ -193,7 +193,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // ── Özet kart ────────────────────────────────────────────────
+                // â”€â”€ Ã–zet kart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -209,7 +209,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // ── Hızlı butonlar (2x3 grid) ─────────────────────────────────
+                // â”€â”€ HÄ±zlÄ± butonlar (2x3 grid) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -227,101 +227,91 @@ class HomeScreen extends ConsumerWidget {
                       childAspectRatio: 1.1,
                       children: [
                         _QuickBtn(
-                          emoji: '∞',
-                          label: 'Sonsuz',
+                          emoji: 'âˆ',
+                          label: l10n.t('home_endless'),
                           color: const Color(0xFF0EA5E9).withOpacity(0.14),
-                          onTap:
-                              () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) => const GameScreen(
-                                        level: 1,
-                                        endless: true,
-                                      ),
-                                ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const GameScreen(
+                                level: 1,
+                                endless: true,
                               ),
+                            ),
+                          ),
                         ),
                         _QuickBtn(
-                          emoji: '⚔️',
-                          label: 'Çok Oyunculu',
+                          emoji: 'âš”ï¸',
+                          label: l10n.t('home_multiplayer'),
                           color: const Color(0xFFEF4444).withOpacity(0.15),
-                          onTap:
-                              () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) => const MultiplayerLobbyScreen(),
-                                ),
-                              ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MultiplayerLobbyScreen(),
+                            ),
+                          ),
                         ),
                         _QuickBtn(
                           emoji: '17',
-                          label: 'Gunluk',
+                          label: l10n.t('home_daily'),
                           color: const Color(0xFF7C3AED).withOpacity(0.15),
-                          onTap:
-                              () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const DailyScreen(),
-                                ),
-                              ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DailyScreen(),
+                            ),
+                          ),
                         ),
                         _QuickBtn(
-                          emoji: '🔥',
-                          label: 'Streak',
+                          emoji: 'ğŸ”¥',
+                          label: l10n.t('home_streak'),
                           color: const Color(0xFFEA580C).withOpacity(0.15),
-                          onTap:
-                              () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const StreakScreen(),
-                                ),
-                              ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const StreakScreen(),
+                            ),
+                          ),
                         ),
                         _QuickBtn(
-                          emoji: '🏆',
-                          label: 'Sıralama',
+                          emoji: 'ğŸ†',
+                          label: l10n.t('home_leaderboard'),
                           color: scheme.secondaryContainer,
-                          onTap:
-                              () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const LeaderboardScreen(),
-                                ),
-                              ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LeaderboardScreen(),
+                            ),
+                          ),
                         ),
                         _QuickBtn(
-                          emoji: '📱',
-                          label: 'Yerel',
+                          emoji: 'ğŸ“±',
+                          label: l10n.t('home_local'),
                           color: const Color(0xFF16A34A).withOpacity(0.1),
-                          onTap:
-                              () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) => const OfflineLeaderboardScreen(),
-                                ),
-                              ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const OfflineLeaderboardScreen(),
+                            ),
+                          ),
                         ),
                         _QuickBtn(
-                          emoji: '✏️',
-                          label: 'Editör',
+                          emoji: 'âœï¸',
+                          label: l10n.t('home_editor'),
                           color: const Color(0xFF7C3AED).withOpacity(0.12),
-                          onTap:
-                              () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const EditorScreen(),
-                                ),
-                              ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const EditorScreen(),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
 
-                // ── Bölümler başlık ───────────────────────────────────────────
+                // â”€â”€ BÃ¶lÃ¼mler baÅŸlÄ±k â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -333,7 +323,7 @@ class HomeScreen extends ConsumerWidget {
                     child: Row(
                       children: [
                         Text(
-                          'Bölümler',
+                          l10n.t('levels'),
                           style: TextStyle(
                             fontSize: isTablet ? 22 : 17,
                             fontWeight: FontWeight.w600,
@@ -436,10 +426,9 @@ class _MapNode extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final nodeSize = boss ? 50.0 : 44.0;
     return GestureDetector(
-      onTap:
-          locked
-              ? null
-              : () => Navigator.push(
+      onTap: locked
+          ? null
+          : () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => GameScreen(level: level)),
               ),
@@ -449,17 +438,15 @@ class _MapNode extends StatelessWidget {
         height: nodeSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color:
-              locked
-                  ? scheme.surfaceContainerHighest
-                  : completed
+          color: locked
+              ? scheme.surfaceContainerHighest
+              : completed
                   ? color
                   : scheme.surface,
           border: Border.all(
-            color:
-                boss
-                    ? const Color(0xFFEF4444)
-                    : locked
+            color: boss
+                ? const Color(0xFFEF4444)
+                : locked
                     ? scheme.outline.withOpacity(0.12)
                     : color.withOpacity(0.45),
             width: boss ? 3 : 1.5,
@@ -474,28 +461,27 @@ class _MapNode extends StatelessWidget {
           ],
         ),
         child: Center(
-          child:
-              locked
-                  ? Icon(
-                    Icons.lock_rounded,
-                    size: 15,
-                    color: scheme.onSurface.withOpacity(0.25),
-                  )
-                  : Text(
-                    boss ? 'B$level' : '$level',
-                    style: TextStyle(
-                      fontSize: boss ? 12 : 13,
-                      fontWeight: FontWeight.w900,
-                      color: completed ? Colors.white : scheme.onSurface,
-                    ),
+          child: locked
+              ? Icon(
+                  Icons.lock_rounded,
+                  size: 15,
+                  color: scheme.onSurface.withOpacity(0.25),
+                )
+              : Text(
+                  boss ? 'B$level' : '$level',
+                  style: TextStyle(
+                    fontSize: boss ? 12 : 13,
+                    fontWeight: FontWeight.w900,
+                    color: completed ? Colors.white : scheme.onSurface,
                   ),
+                ),
         ),
       ),
     );
   }
 }
 
-// ─── Summary Card ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Summary Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _SummaryCard extends StatelessWidget {
   final int count;
@@ -520,18 +506,18 @@ class _SummaryCard extends StatelessWidget {
           _div(),
           _Stat('Oran', '${(count / 60 * 100).round()}%'),
           _div(),
-          _Stat('🔥 Seri', '$streak'),
+          _Stat('ğŸ”¥ Seri', '$streak'),
         ],
       ),
     );
   }
 
   Widget _div() => Container(
-    width: 1,
-    height: 28,
-    margin: const EdgeInsets.symmetric(horizontal: 8),
-    color: Colors.black12,
-  );
+        width: 1,
+        height: 28,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        color: Colors.black12,
+      );
 }
 
 class _Stat extends StatelessWidget {
@@ -566,7 +552,7 @@ class _Stat extends StatelessWidget {
   }
 }
 
-// ─── Quick Button ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Quick Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _QuickBtn extends StatelessWidget {
   final String emoji, label;
@@ -606,4 +592,4 @@ class _QuickBtn extends StatelessWidget {
   }
 }
 
-// ─── Level Cell ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Level Cell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

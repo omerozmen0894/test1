@@ -8,6 +8,7 @@ import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/database/progress_model.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/maze_generator.dart';
 import '../../core/models/maze_model.dart';
 import '../../core/models/theme_model.dart';
@@ -229,12 +230,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     return _LevelGoal.fillAll;
   }
 
-  String get _goalTitle => switch (_goal) {
-        _LevelGoal.keyExit => 'Anahtarlarla cikisa ulas',
-        _LevelGoal.crystalOrder => 'Kristalleri sirayla topla',
-        _LevelGoal.noTrap => 'Tuzaklardan kac',
-        _LevelGoal.boss => 'Boss baskisindan kac',
-        _LevelGoal.fillAll => 'Tum kareleri boya',
+  String _goalTitle(BuildContext context) => switch (_goal) {
+        _LevelGoal.keyExit => context.l10n.t('key_exit'),
+        _LevelGoal.crystalOrder => context.l10n.t('crystals'),
+        _LevelGoal.noTrap => context.l10n.t('avoid_traps'),
+        _LevelGoal.boss => context.l10n.t('boss'),
+        _LevelGoal.fillAll => context.l10n.t('fill_all'),
       };
 
   String get _goalProgress => switch (_goal) {
@@ -247,15 +248,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       };
 
   String _flavorForLevel(int level) {
-    if (level == 2) return 'Anahtarı Bul';
-    if (level == 3) return 'İlk Bomba';
-    if (level == 4) return 'Zamana Karşı';
+    if (level == 2) return 'AnahtarÄ± Bul';
+    if (level == 3) return 'Ä°lk Bomba';
+    if (level == 4) return 'Zamana KarÅŸÄ±';
     if (level >= 7 && level % 4 == 3) return 'Anahtar Kilidi';
     if (level >= 5 && level % 4 == 1) return 'Patlayan Kareler';
-    if (level >= 4 && level % 3 == 0) return 'Takipten Kaç';
-    if (level >= 3 && level % 2 == 0) return 'Zamana Karşı';
-    if (level % 5 == 0) return 'Kristal Avı';
-    if (level % 5 == 2) return 'Seri Bölümü';
+    if (level >= 4 && level % 3 == 0) return 'Takipten KaÃ§';
+    if (level >= 3 && level % 2 == 0) return 'Zamana KarÅŸÄ±';
+    if (level % 5 == 0) return 'Kristal AvÄ±';
+    if (level % 5 == 2) return 'Seri BÃ¶lÃ¼mÃ¼';
     return 'Kusursuz Rota';
   }
 
@@ -408,10 +409,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _bonusCells = {..._bonusCells, ...shiftedBonuses};
       _shields = math.min(2, _shields + 1);
       _flowStreak += 2;
-      _levelFlavor = clearedRubble.isEmpty ? 'Bomba patladı' : 'Yol açıldı!';
+      _levelFlavor =
+          clearedRubble.isEmpty ? 'Bomba patladÄ±' : 'Yol aÃ§Ä±ldÄ±!';
     });
     _showFeedback(
-      clearedRubble.isEmpty ? 'BOMBA!' : 'YOL AÇILDI',
+      clearedRubble.isEmpty ? 'BOMBA!' : 'YOL AÃ‡ILDI',
       const Color(0xFFF97316),
     );
     Future.delayed(const Duration(milliseconds: 700), () {
@@ -438,7 +440,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         _flowStreak = 0;
         _enemy = _state.maze.end;
         _blastCell = _state.head;
-        _levelFlavor = 'Kalkan kırıldı';
+        _levelFlavor = 'Kalkan kÄ±rÄ±ldÄ±';
       });
       _showFeedback('KALKAN KIRILDI', const Color(0xFFEF4444));
     } else {
@@ -453,7 +455,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         _flowStreak = 0;
         _enemy = _state.maze.end;
         _blastCell = _state.head;
-        _levelFlavor = 'Yakalandın!';
+        _levelFlavor = 'YakalandÄ±n!';
       });
       _showFeedback('YAKALANDIN', const Color(0xFFEF4444));
     }
@@ -582,9 +584,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       HapticFeedback.lightImpact();
       setState(() {
         _flowStreak = 0;
-        _levelFlavor = 'Önce anahtarı topla';
+        _levelFlavor = 'Ã–nce anahtarÄ± topla';
       });
-      _showFeedback('ANAHTAR GEREKİYOR', const Color(0xFF0EA5E9));
+      _showFeedback('ANAHTAR GEREKÄ°YOR', const Color(0xFF0EA5E9));
       return;
     }
     if (next == _state.maze.end &&
@@ -602,9 +604,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       HapticFeedback.lightImpact();
       setState(() {
         _flowStreak = 0;
-        _levelFlavor = 'Önce bombayı patlat';
+        _levelFlavor = 'Ã–nce bombayÄ± patlat';
       });
-      _showFeedback('BOMBA GEREKİYOR', const Color(0xFFF97316));
+      _showFeedback('BOMBA GEREKÄ°YOR', const Color(0xFFF97316));
       return;
     }
     if (_goal == _LevelGoal.crystalOrder &&
@@ -640,11 +642,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _timeBonusCells = _timeBonusCells.difference({updated.head});
       if (collectedBonus) {
         _shields = math.min(2, _shields + 1);
-        _levelFlavor = 'Kalkan kazandın';
+        _levelFlavor = 'Kalkan kazandÄ±n';
       }
       if (collectedKey) {
         _levelFlavor =
-            _keyCells.length <= 1 ? 'Kilit açıldı' : 'Anahtar toplandı';
+            _keyCells.length <= 1 ? 'Kilit aÃ§Ä±ldÄ±' : 'Anahtar toplandÄ±';
       }
       if (collectedTime) {
         _elapsedSeconds = math.max(0, _elapsedSeconds - 6);
@@ -694,12 +696,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       final reward = _rewardForWin(stars, winningState.moveCount, usedHints);
       await _addCoins(reward);
       if (!mounted) return;
+      final l10n = context.l10n;
       final nextLevel = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
           icon: const Icon(Icons.emoji_events_rounded, size: 42),
-          title: const Text('Bölüm tamamlandı'),
+          title: Text(l10n.t('level_done')),
           content: _WinSummary(
             moves: winningState.moveCount,
             stars: stars,
@@ -711,11 +714,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Menü'),
+              child: Text(l10n.t('menu')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Sonraki bölüm'),
+              child: Text(l10n.t('next_level')),
             ),
           ],
         ),
@@ -988,7 +991,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             key: ValueKey('$_levelFlavor-$progress-$_flowStreak'),
             moves: _state.moveCount,
             progress: progress,
-            goalTitle: _goalTitle,
+            goalTitle: _goalTitle(context),
             goalProgress: _goalProgress,
             hintsLeft: visibleHints,
             flowStreak: _flowStreak,
@@ -1106,7 +1109,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(widget.endless ? 'Sonsuz $_level' : 'Bölüm $_level'),
+        title: Text(widget.endless ? 'Sonsuz $_level' : 'BÃ¶lÃ¼m $_level'),
         centerTitle: true,
         actions: [
           IconButton(
@@ -1118,7 +1121,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             icon: const Icon(Icons.undo_rounded),
           ),
           IconButton(
-            tooltip: 'Nasıl oynanır?',
+            tooltip: 'NasÄ±l oynanÄ±r?',
             onPressed: () => showModalBottomSheet<void>(
               context: context,
               isScrollControlled: true,
@@ -1438,7 +1441,7 @@ class _MissionPanel extends StatelessWidget {
           Row(
             children: [
               _Stat(label: 'Hamle', value: '$moves'),
-              _Stat(label: 'İlerleme', value: '$progress%'),
+              _Stat(label: 'Ä°lerleme', value: '$progress%'),
               _Stat(label: 'Seri', value: 'x$flowStreak'),
               _ShieldPill(count: shields),
               if (keysLeft > 0) _KeyPill(count: keysLeft),
@@ -1503,6 +1506,7 @@ class _WinSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.88, end: 1),
       duration: const Duration(milliseconds: 360),
@@ -1526,7 +1530,7 @@ class _WinSummary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text('$moves hamle',
+          Text(l10n.moves(moves),
               style: const TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
           Container(
@@ -1541,7 +1545,7 @@ class _WinSummary extends StatelessWidget {
                 const Icon(Icons.monetization_on_rounded,
                     color: Color(0xFFF59E0B)),
                 const SizedBox(width: 6),
-                Text('+$reward jeton  ·  Toplam $coins'),
+                Text(l10n.reward(reward, coins)),
               ],
             ),
           ),
@@ -1558,8 +1562,8 @@ class _WinSummary extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             stars == 3
-                ? 'Harika. Bir sonraki bölüm biraz daha çetin.'
-                : 'Devam et; yıldızları topladıkça jeton kazanırsın.',
+                ? 'Harika. Bir sonraki bÃ¶lÃ¼m biraz daha Ã§etin.'
+                : 'Devam et; yÄ±ldÄ±zlarÄ± topladÄ±kÃ§a jeton kazanÄ±rsÄ±n.',
             textAlign: TextAlign.center,
             style: TextStyle(color: scheme.onSurface.withOpacity(0.68)),
           ),
@@ -1617,7 +1621,7 @@ class _HintPill extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'İpucu',
+            'Ä°pucu',
             style: TextStyle(
               fontSize: 11,
               color: scheme.onSurface.withOpacity(0.55),
@@ -1909,7 +1913,7 @@ class _TutorialSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Nasıl oynanır?',
+                      'NasÄ±l oynanÄ±r?',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
@@ -1919,7 +1923,7 @@ class _TutorialSheet extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Geç'),
+                    child: Text(context.l10n.t('skip')),
                   ),
                 ],
               ),
@@ -1933,27 +1937,27 @@ class _TutorialSheet extends StatelessWidget {
                     children: const [
                       _TutorialLine(
                         icon: Icons.grid_on_rounded,
-                        title: 'Tüm kareleri boya',
+                        title: 'TÃ¼m kareleri boya',
                         text:
-                            'Mor rotayı açık karelerin tamamından geçir. Aynı kareye geri dönme.',
+                            'Mor rotayÄ± aÃ§Ä±k karelerin tamamÄ±ndan geÃ§ir. AynÄ± kareye geri dÃ¶nme.',
                       ),
                       _TutorialLine(
                         icon: Icons.flag_rounded,
                         title: 'HEDEF en son',
                         text:
-                            'Turuncu hedefe erken girme. Önce alanı doldur, sonra hedefe ulaş.',
+                            'Turuncu hedefe erken girme. Ã–nce alanÄ± doldur, sonra hedefe ulaÅŸ.',
                       ),
                       _TutorialLine(
                         icon: Icons.touch_app_rounded,
-                        title: 'Kaydır veya yön tuşlarını kullan',
+                        title: 'KaydÄ±r veya yÃ¶n tuÅŸlarÄ±nÄ± kullan',
                         text:
-                            'Alttaki yön tuşları ve ekranda kaydırma aynı şekilde çalışır.',
+                            'Alttaki yÃ¶n tuÅŸlarÄ± ve ekranda kaydÄ±rma aynÄ± ÅŸekilde Ã§alÄ±ÅŸÄ±r.',
                       ),
                       _TutorialLine(
                         icon: Icons.lightbulb_rounded,
-                        title: 'Takılırsan ipucu al',
+                        title: 'TakÄ±lÄ±rsan ipucu al',
                         text:
-                            'İpucu önerilen kareyi gösterir. Sonraki bölümlerde anahtar, tuzak ve takip gelir.',
+                            'Ä°pucu Ã¶nerilen kareyi gÃ¶sterir. Sonraki bÃ¶lÃ¼mlerde anahtar, tuzak ve takip gelir.',
                       ),
                     ],
                   ),
@@ -1963,7 +1967,7 @@ class _TutorialSheet extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.play_arrow_rounded),
-                label: const Text('Başla'),
+                label: Text(context.l10n.t('start')),
               ),
             ],
           ),
