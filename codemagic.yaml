@@ -1,4 +1,4 @@
-workflows:
+﻿workflows:
   ios-appstore:
     name: Wrap Maze iOS - App Store Connect
     max_build_duration: 120
@@ -231,8 +231,8 @@ workflows:
         script: |
           flutter build ipa --release \
             --no-pub \
-            --build-name=1.0.20 \
-            --build-number=57 \
+            --build-name=1.0.21 \
+            --build-number=58 \
             --export-method=app-store
     artifacts:
       - build/ios/ipa/*.ipa
@@ -243,3 +243,4 @@ workflows:
         auth: integration
         submit_to_testflight: false
         submit_to_app_store: false
+

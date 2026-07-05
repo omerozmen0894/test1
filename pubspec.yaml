@@ -1,7 +1,7 @@
-name: wrap_maze
-description: Wrap Maze - Tam özellikli labirent bulmaca oyunu
+﻿name: wrap_maze
+description: Wrap Maze - Tam Ã¶zellikli labirent bulmaca oyunu
 publish_to: 'none'
-version: 1.0.20+57
+version: 1.0.21+58
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
@@ -12,11 +12,11 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # State yönetimi
+  # State yÃ¶netimi
   flutter_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.5
 
-  # Yerel veritabanı
+  # Yerel veritabanÄ±
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   path_provider: ^2.1.3
@@ -49,3 +49,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
