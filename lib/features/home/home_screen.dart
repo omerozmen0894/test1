@@ -23,9 +23,9 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final completedAsync = ref.watch(completedLevelsProvider);
     final user = ref.watch(authStateProvider).valueOrNull;
-    final l10n = context.l10n;
     final completed = completedAsync.valueOrNull ?? [];
     final completedSet = {for (final p in completed) p.levelNumber};
     final streakAsync = ref.watch(streakDataProvider);
@@ -45,7 +45,7 @@ class HomeScreen extends ConsumerWidget {
             child: CustomScrollView(
               key: UniqueKey(),
               slivers: [
-                // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // Header
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -106,9 +106,10 @@ class HomeScreen extends ConsumerWidget {
                               ),
                               child: Row(
                                 children: [
-                                  const Text(
-                                    'ğŸ”¥',
-                                    style: TextStyle(fontSize: 14),
+                                  const Icon(
+                                    Icons.local_fire_department_rounded,
+                                    size: 16,
+                                    color: Color(0xFFEF4444),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -193,7 +194,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // â”€â”€ Ã–zet kart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // Summary card
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -209,7 +210,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // â”€â”€ HÄ±zlÄ± butonlar (2x3 grid) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // Quick buttons
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -227,7 +228,7 @@ class HomeScreen extends ConsumerWidget {
                       childAspectRatio: 1.1,
                       children: [
                         _QuickBtn(
-                          emoji: 'âˆ',
+                          icon: Icons.all_inclusive_rounded,
                           label: l10n.t('home_endless'),
                           color: const Color(0xFF0EA5E9).withOpacity(0.14),
                           onTap: () => Navigator.push(
@@ -241,7 +242,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          emoji: 'âš”ï¸',
+                          icon: Icons.sports_martial_arts_rounded,
                           label: l10n.t('home_multiplayer'),
                           color: const Color(0xFFEF4444).withOpacity(0.15),
                           onTap: () => Navigator.push(
@@ -252,7 +253,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          emoji: '17',
+                          icon: Icons.calendar_month_rounded,
                           label: l10n.t('home_daily'),
                           color: const Color(0xFF7C3AED).withOpacity(0.15),
                           onTap: () => Navigator.push(
@@ -263,7 +264,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          emoji: 'ğŸ”¥',
+                          icon: Icons.local_fire_department_rounded,
                           label: l10n.t('home_streak'),
                           color: const Color(0xFFEA580C).withOpacity(0.15),
                           onTap: () => Navigator.push(
@@ -274,7 +275,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          emoji: 'ğŸ†',
+                          icon: Icons.emoji_events_rounded,
                           label: l10n.t('home_leaderboard'),
                           color: scheme.secondaryContainer,
                           onTap: () => Navigator.push(
@@ -285,7 +286,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          emoji: 'ğŸ“±',
+                          icon: Icons.phone_android_rounded,
                           label: l10n.t('home_local'),
                           color: const Color(0xFF16A34A).withOpacity(0.1),
                           onTap: () => Navigator.push(
@@ -296,7 +297,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          emoji: 'âœï¸',
+                          icon: Icons.edit_rounded,
                           label: l10n.t('home_editor'),
                           color: const Color(0xFF7C3AED).withOpacity(0.12),
                           onTap: () => Navigator.push(
@@ -311,7 +312,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // â”€â”€ BÃ¶lÃ¼mler baÅŸlÄ±k â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // Levels header
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -481,7 +482,7 @@ class _MapNode extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€ Summary Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Summary Card
 
 class _SummaryCard extends StatelessWidget {
   final int count;
@@ -491,6 +492,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
@@ -500,13 +502,13 @@ class _SummaryCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Stat('Tamamlanan', '$count'),
+          _Stat(l10n.t('completed'), '$count'),
           _div(),
-          _Stat('Toplam', '60'),
+          _Stat(l10n.t('total'), '60'),
           _div(),
-          _Stat('Oran', '${(count / 60 * 100).round()}%'),
+          _Stat(l10n.t('rate'), '${(count / 60 * 100).round()}%'),
           _div(),
-          _Stat('ğŸ”¥ Seri', '$streak'),
+          _Stat(l10n.t('series'), '$streak'),
         ],
       ),
     );
@@ -552,15 +554,16 @@ class _Stat extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€ Quick Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Quick Button
 
 class _QuickBtn extends StatelessWidget {
-  final String emoji, label;
+  final IconData icon;
+  final String label;
   final Color color;
   final VoidCallback onTap;
 
   const _QuickBtn({
-    required this.emoji,
+    required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
@@ -578,7 +581,7 @@ class _QuickBtn extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 24)),
+            Icon(icon, size: 28),
             const SizedBox(height: 4),
             Text(
               label,
@@ -592,4 +595,4 @@ class _QuickBtn extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€ Level Cell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Level Cell
