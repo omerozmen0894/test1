@@ -30,153 +30,188 @@ class SettingsScreen extends ConsumerWidget {
       body: settings.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('$error')),
-        data: (value) => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.account_circle_rounded),
-                    title: Text(user?.displayName?.trim().isNotEmpty == true
-                        ? user!.displayName!
-                        : value.displayName),
-                    subtitle: Text(user?.isAnonymous == true
-                        ? l10n.t('guest_account')
-                        : (user?.email ?? l10n.t('no_email'))),
-                  ),
-                  if (offlineMode) ...[
+        data: (value) => SafeArea(
+          top: false,
+          child: ListView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              24 + MediaQuery.paddingOf(context).bottom,
+            ),
+            children: [
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.account_circle_rounded),
+                      title: Text(user?.displayName?.trim().isNotEmpty == true
+                          ? user!.displayName!
+                          : value.displayName),
+                      subtitle: Text(user?.isAnonymous == true
+                          ? l10n.t('guest_account')
+                          : (user?.email ?? l10n.t('no_email'))),
+                    ),
+                    if (offlineMode) ...[
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.cloud_sync_rounded),
+                        title: Text(l10n.t('sign_in')),
+                        subtitle: Text(l10n.t('offline_note')),
+                        onTap: () async {
+                          await ref
+                              .read(offlineModeProvider.notifier)
+                              .setOfflineMode(false);
+                          ref.invalidate(authStateProvider);
+                        },
+                      ),
+                    ],
                     const Divider(height: 1),
                     ListTile(
-                      leading: const Icon(Icons.cloud_sync_rounded),
-                      title: Text(l10n.t('sign_in')),
-                      subtitle: Text(l10n.t('offline_note')),
-                      onTap: () async {
-                        await ref
-                            .read(offlineModeProvider.notifier)
-                            .setOfflineMode(false);
-                        ref.invalidate(authStateProvider);
-                      },
+                      leading: const Icon(Icons.badge_rounded),
+                      title: Text(l10n.isTr
+                          ? 'Oyuncu adini degistir'
+                          : 'Change player name'),
+                      onTap: () => _changeDisplayName(context, ref),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.alternate_email_rounded),
+                      title:
+                          Text(l10n.isTr ? 'E-posta degistir' : 'Change email'),
+                      subtitle: Text(l10n.isTr
+                          ? 'Yeni adrese dogrulama baglantisi gider.'
+                          : 'A verification link will be sent to the new address.'),
+                      enabled: user != null && !user.isAnonymous,
+                      onTap: user != null && !user.isAnonymous
+                          ? () => _requestEmailChange(context, ref, user.email)
+                          : null,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.lock_reset_rounded),
+                      title: Text(l10n.isTr
+                          ? 'Sifre sifirlama e-postasi gonder'
+                          : 'Send password reset email'),
+                      enabled: user?.email?.isNotEmpty == true,
+                      onTap: user?.email?.isNotEmpty == true
+                          ? () => _sendPasswordReset(context, ref, user!.email!)
+                          : null,
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.logout_rounded),
+                      title: Text(l10n.t('logout')),
+                      subtitle: Text(l10n.isTr
+                          ? 'Giris ekranina don.'
+                          : 'Return to sign in.'),
+                      onTap: () => _signOut(context, ref),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: Icon(
+                        Icons.delete_forever_rounded,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      title: Text(
+                        'Hesabi sil',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: Text(l10n.isTr
+                          ? 'Hesap ve bu cihazdaki veriler silinir.'
+                          : 'Deletes the account and data on this device.'),
+                      enabled: user != null,
+                      onTap: user == null
+                          ? null
+                          : () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AccountDeletionScreen(),
+                                ),
+                              ),
                     ),
                   ],
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.badge_rounded),
-                    title: const Text('Oyuncu adini degistir'),
-                    onTap: () => _changeDisplayName(context, ref),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.alternate_email_rounded),
-                    title: const Text('E-posta degistir'),
-                    subtitle:
-                        const Text('Yeni adrese dogrulama baglantisi gider.'),
-                    enabled: user != null && !user.isAnonymous,
-                    onTap: user != null && !user.isAnonymous
-                        ? () => _requestEmailChange(context, ref, user.email)
-                        : null,
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.lock_reset_rounded),
-                    title: const Text('Sifre sifirlama e-postasi gonder'),
-                    enabled: user?.email?.isNotEmpty == true,
-                    onTap: user?.email?.isNotEmpty == true
-                        ? () => _sendPasswordReset(context, ref, user!.email!)
-                        : null,
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(
-                      Icons.delete_forever_rounded,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    title: Text(
-                      'Hesabi sil',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    subtitle:
-                        const Text('Hesap ve bu cihazdaki veriler silinir.'),
-                    enabled: user != null,
-                    onTap: user == null
-                        ? null
-                        : () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const AccountDeletionScreen(),
-                              ),
-                            ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Column(
-                children: [
-                  RadioListTile<String>(
-                    title: Text(l10n.t('system_language')),
-                    value: 'system',
-                    groupValue: languageCode,
-                    onChanged: (value) => ref
-                        .read(languageCodeProvider.notifier)
-                        .setLanguage(value),
-                  ),
-                  RadioListTile<String>(
-                    title: Text(l10n.t('turkish')),
-                    value: 'tr',
-                    groupValue: languageCode,
-                    onChanged: (value) => ref
-                        .read(languageCodeProvider.notifier)
-                        .setLanguage(value),
-                  ),
-                  RadioListTile<String>(
-                    title: Text(l10n.t('english')),
-                    value: 'en',
-                    groupValue: languageCode,
-                    onChanged: (value) => ref
-                        .read(languageCodeProvider.notifier)
-                        .setLanguage(value),
-                  ),
-                ],
+              const SizedBox(height: 16),
+              Card(
+                child: Column(
+                  children: [
+                    RadioListTile<String>(
+                      title: Text(l10n.t('system_language')),
+                      value: 'system',
+                      groupValue: languageCode,
+                      onChanged: (value) => ref
+                          .read(languageCodeProvider.notifier)
+                          .setLanguage(value),
+                    ),
+                    RadioListTile<String>(
+                      title: Text(l10n.t('turkish')),
+                      value: 'tr',
+                      groupValue: languageCode,
+                      onChanged: (value) => ref
+                          .read(languageCodeProvider.notifier)
+                          .setLanguage(value),
+                    ),
+                    RadioListTile<String>(
+                      title: Text(l10n.t('english')),
+                      value: 'en',
+                      groupValue: languageCode,
+                      onChanged: (value) => ref
+                          .read(languageCodeProvider.notifier)
+                          .setLanguage(value),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: Text(l10n.t('sound')),
-              value: value.soundEnabled,
-              onChanged: (v) =>
-                  ref.read(settingsProvider.notifier).setSoundEnabled(v),
-            ),
-            SwitchListTile(
-              title: Text(l10n.t('haptics')),
-              value: value.hapticsEnabled,
-              onChanged: (v) =>
-                  ref.read(settingsProvider.notifier).setHapticsEnabled(v),
-            ),
-            const SizedBox(height: 16),
-            Text(l10n.t('theme'),
-                style: const TextStyle(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            ...AppThemes.all.map(
-              (theme) {
-                return RadioListTile<String>(
-                  title: Text('${theme.emoji} ${theme.name}'),
-                  value: theme.id,
-                  groupValue: value.themeId,
-                  onChanged: (id) {
-                    if (id != null) {
-                      ref.read(settingsProvider.notifier).setTheme(id);
-                    }
-                  },
-                );
-              },
-            ),
-          ],
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: Text(l10n.t('sound')),
+                value: value.soundEnabled,
+                onChanged: (v) =>
+                    ref.read(settingsProvider.notifier).setSoundEnabled(v),
+              ),
+              SwitchListTile(
+                title: Text(l10n.t('haptics')),
+                value: value.hapticsEnabled,
+                onChanged: (v) =>
+                    ref.read(settingsProvider.notifier).setHapticsEnabled(v),
+              ),
+              const SizedBox(height: 16),
+              Text(l10n.t('theme'),
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 8),
+              ...AppThemes.all.map(
+                (theme) {
+                  return RadioListTile<String>(
+                    title: Text('${theme.emoji} ${theme.name}'),
+                    value: theme.id,
+                    groupValue: value.themeId,
+                    onChanged: (id) {
+                      if (id != null) {
+                        ref.read(settingsProvider.notifier).setTheme(id);
+                      }
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+    await ref.read(offlineModeProvider.notifier).setOfflineMode(false);
+    await ref.read(authServiceProvider).signOut();
+    ref.invalidate(authStateProvider);
+    ref.invalidate(settingsProvider);
+    ref.invalidate(completedLevelsProvider);
+    if (!context.mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   Future<void> _changeDisplayName(BuildContext context, WidgetRef ref) async {

@@ -238,26 +238,42 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         _LevelGoal.fillAll => context.l10n.t('fill_all'),
       };
 
-  String get _goalProgress => switch (_goal) {
-        _LevelGoal.keyExit => '${_keyCells.length} anahtar kaldi',
-        _LevelGoal.crystalOrder =>
-          '$_crystalIndex/${_crystalRoute.length} kristal',
-        _LevelGoal.noTrap => _trapHits == 0 ? 'Temiz rota' : '$_trapHits tuzak',
-        _LevelGoal.boss => 'Baski $_bossPressure',
+  String _goalProgress(BuildContext context) => switch (_goal) {
+        _LevelGoal.keyExit => context.l10n.isTr
+            ? '${_keyCells.length} anahtar kaldi'
+            : '${_keyCells.length} keys left',
+        _LevelGoal.crystalOrder => context.l10n.isTr
+            ? '${_crystalIndex}/${_crystalRoute.length} kristal'
+            : '${_crystalIndex}/${_crystalRoute.length} crystals',
+        _LevelGoal.noTrap => _trapHits == 0
+            ? (context.l10n.isTr ? 'Temiz rota' : 'Clean route')
+            : (context.l10n.isTr ? '${_trapHits} tuzak' : '${_trapHits} traps'),
+        _LevelGoal.boss => context.l10n.isTr
+            ? 'Baski ${_bossPressure}'
+            : 'Pressure ${_bossPressure}',
         _LevelGoal.fillAll => '${(_state.progressPercent * 100).round()}%',
       };
 
   String _flavorForLevel(int level) {
-    if (level == 2) return 'AnahtarÄ± Bul';
-    if (level == 3) return 'Ä°lk Bomba';
-    if (level == 4) return 'Zamana KarÅŸÄ±';
-    if (level >= 7 && level % 4 == 3) return 'Anahtar Kilidi';
-    if (level >= 5 && level % 4 == 1) return 'Patlayan Kareler';
-    if (level >= 4 && level % 3 == 0) return 'Takipten KaÃ§';
-    if (level >= 3 && level % 2 == 0) return 'Zamana KarÅŸÄ±';
-    if (level % 5 == 0) return 'Kristal AvÄ±';
-    if (level % 5 == 2) return 'Seri BÃ¶lÃ¼mÃ¼';
-    return 'Kusursuz Rota';
+    final l10n = AppLocalizations.of(context);
+    if (level == 2) return l10n.isTr ? 'Anahtari Bul' : 'Find the Key';
+    if (level == 3) return l10n.isTr ? 'Ilk Bomba' : 'First Blast';
+    if (level == 4) return l10n.isTr ? 'Zamana Karsi' : 'Beat the Clock';
+    if (level >= 7 && level % 4 == 3) {
+      return l10n.isTr ? 'Anahtar Kilidi' : 'Key Lock';
+    }
+    if (level >= 5 && level % 4 == 1) {
+      return l10n.isTr ? 'Patlayan Kareler' : 'Blast Tiles';
+    }
+    if (level >= 4 && level % 3 == 0) {
+      return l10n.isTr ? 'Takipten Kac' : 'Escape the Chase';
+    }
+    if (level >= 3 && level % 2 == 0) {
+      return l10n.isTr ? 'Zamana Karsi' : 'Beat the Clock';
+    }
+    if (level % 5 == 0) return l10n.isTr ? 'Kristal Avi' : 'Crystal Hunt';
+    if (level % 5 == 2) return l10n.isTr ? 'Seri Bolumu' : 'Combo Stage';
+    return l10n.isTr ? 'Kusursuz Rota' : 'Perfect Route';
   }
 
   Set<Cell> _bonusCellsFor(MazeConfig maze, int level) {
@@ -409,11 +425,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _bonusCells = {..._bonusCells, ...shiftedBonuses};
       _shields = math.min(2, _shields + 1);
       _flowStreak += 2;
-      _levelFlavor =
-          clearedRubble.isEmpty ? 'Bomba patladÄ±' : 'Yol aÃ§Ä±ldÄ±!';
+      _levelFlavor = clearedRubble.isEmpty
+          ? (context.l10n.isTr ? 'Bomba patladi' : 'Blast!')
+          : (context.l10n.isTr ? 'Yol acildi!' : 'Path opened!');
     });
     _showFeedback(
-      clearedRubble.isEmpty ? 'BOMBA!' : 'YOL AÃ‡ILDI',
+      clearedRubble.isEmpty
+          ? (context.l10n.isTr ? 'BOMBA!' : 'BLAST!')
+          : (context.l10n.isTr ? 'YOL ACILDI' : 'PATH OPENED'),
       const Color(0xFFF97316),
     );
     Future.delayed(const Duration(milliseconds: 700), () {
@@ -440,9 +459,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         _flowStreak = 0;
         _enemy = _state.maze.end;
         _blastCell = _state.head;
-        _levelFlavor = 'Kalkan kÄ±rÄ±ldÄ±';
+        _levelFlavor = context.l10n.isTr ? 'Kalkan kirildi' : 'Shield broke';
       });
-      _showFeedback('KALKAN KIRILDI', const Color(0xFFEF4444));
+      _showFeedback(
+        context.l10n.isTr ? 'KALKAN KIRILDI' : 'SHIELD BROKE',
+        const Color(0xFFEF4444),
+      );
     } else {
       final keepCount = math.max(1, _state.path.length - 3);
       setState(() {
@@ -455,9 +477,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         _flowStreak = 0;
         _enemy = _state.maze.end;
         _blastCell = _state.head;
-        _levelFlavor = 'YakalandÄ±n!';
+        _levelFlavor = context.l10n.isTr ? 'Yakalandin!' : 'Caught!';
       });
-      _showFeedback('YAKALANDIN', const Color(0xFFEF4444));
+      _showFeedback(
+        context.l10n.isTr ? 'YAKALANDIN' : 'CAUGHT',
+        const Color(0xFFEF4444),
+      );
     }
 
     Future.delayed(const Duration(milliseconds: 650), () {
@@ -475,7 +500,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _elapsedSeconds = math.max(0, _timeTarget - 6);
       if (blockedByShield) {
         _shields--;
-        _levelFlavor = 'Sure kalkani kirdi';
+        _levelFlavor =
+            context.l10n.isTr ? 'Sure kalkani kirdi' : 'Time shield broke';
       } else {
         final keepCount = math.max(1, _state.path.length - 3);
         _state = _state.copyWith(
@@ -484,11 +510,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           hintPath: const [],
           history: const [],
         );
-        _levelFlavor = 'Sure doldu';
+        _levelFlavor = context.l10n.isTr ? 'Sure doldu' : 'Time is up';
       }
     });
     _showFeedback(
-      blockedByShield ? 'SURE DOLDU' : 'GERI SARILDIN',
+      blockedByShield
+          ? (context.l10n.isTr ? 'SURE DOLDU' : 'TIME IS UP')
+          : (context.l10n.isTr ? 'GERI SARILDIN' : 'REWOUND'),
       const Color(0xFFEF4444),
     );
     Future.delayed(const Duration(milliseconds: 650), () {
@@ -506,7 +534,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _blastCell = cell;
       if (blockedByShield) {
         _shields--;
-        _levelFlavor = 'Tuzak kalkani kirdi';
+        _levelFlavor =
+            context.l10n.isTr ? 'Tuzak kalkani kirdi' : 'Trap broke shield';
       } else {
         final keepCount = math.max(1, _state.path.length - 2);
         _state = _state.copyWith(
@@ -514,11 +543,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           moveCount: _state.moveCount + 1,
           hintPath: const [],
         );
-        _levelFlavor = 'Tuzak geri itti';
+        _levelFlavor =
+            context.l10n.isTr ? 'Tuzak geri itti' : 'Trap pushed back';
       }
     });
     _showFeedback(
-      blockedByShield ? 'TUZAK!' : 'GERI ITILDIN',
+      blockedByShield
+          ? (context.l10n.isTr ? 'TUZAK!' : 'TRAP!')
+          : (context.l10n.isTr ? 'GERI ITILDIN' : 'PUSHED BACK'),
       const Color(0xFFEF4444),
     );
     Future.delayed(const Duration(milliseconds: 520), () {
@@ -584,9 +616,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       HapticFeedback.lightImpact();
       setState(() {
         _flowStreak = 0;
-        _levelFlavor = 'Ã–nce anahtarÄ± topla';
+        _levelFlavor =
+            context.l10n.isTr ? 'Once anahtari topla' : 'Collect the key first';
       });
-      _showFeedback('ANAHTAR GEREKÄ°YOR', const Color(0xFF0EA5E9));
+      _showFeedback(context.l10n.isTr ? 'ANAHTAR GEREKIYOR' : 'KEY REQUIRED',
+          const Color(0xFF0EA5E9));
       return;
     }
     if (next == _state.maze.end &&
@@ -595,18 +629,21 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       HapticFeedback.lightImpact();
       setState(() {
         _flowStreak = 0;
-        _levelFlavor = 'Hedef en son';
+        _levelFlavor = context.l10n.isTr ? 'Hedef en son' : 'Target comes last';
       });
-      _showFeedback('HEDEF EN SON', const Color(0xFFF97316));
+      _showFeedback(context.l10n.isTr ? 'HEDEF EN SON' : 'TARGET LAST',
+          const Color(0xFFF97316));
       return;
     }
     if (_rubbleCells.contains(next)) {
       HapticFeedback.lightImpact();
       setState(() {
         _flowStreak = 0;
-        _levelFlavor = 'Ã–nce bombayÄ± patlat';
+        _levelFlavor =
+            context.l10n.isTr ? 'Once bombayi patlat' : 'Blast the bomb first';
       });
-      _showFeedback('BOMBA GEREKÄ°YOR', const Color(0xFFF97316));
+      _showFeedback(context.l10n.isTr ? 'BOMBA GEREKIYOR' : 'BOMB REQUIRED',
+          const Color(0xFFF97316));
       return;
     }
     if (_goal == _LevelGoal.crystalOrder &&
@@ -615,9 +652,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       HapticFeedback.lightImpact();
       setState(() {
         _flowStreak = 0;
-        _levelFlavor = 'Siradaki kristali bul';
+        _levelFlavor = context.l10n.isTr
+            ? 'Siradaki kristali bul'
+            : 'Find the next crystal';
       });
-      _showFeedback('SIRA YANLIS', const Color(0xFF14B8A6));
+      _showFeedback(context.l10n.isTr ? 'SIRA YANLIS' : 'WRONG ORDER',
+          const Color(0xFF14B8A6));
       return;
     }
     final updated = _state.tryMove(next);
@@ -642,34 +682,36 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _timeBonusCells = _timeBonusCells.difference({updated.head});
       if (collectedBonus) {
         _shields = math.min(2, _shields + 1);
-        _levelFlavor = 'Kalkan kazandÄ±n';
+        _levelFlavor = context.l10n.isTr ? 'Kalkan kazandin' : 'Shield gained';
       }
       if (collectedKey) {
-        _levelFlavor =
-            _keyCells.length <= 1 ? 'Kilit aÃ§Ä±ldÄ±' : 'Anahtar toplandÄ±';
+        _levelFlavor = _keyCells.length <= 1
+            ? (context.l10n.isTr ? 'Kilit acildi' : 'Lock opened')
+            : (context.l10n.isTr ? 'Anahtar toplandi' : 'Key collected');
       }
       if (collectedTime) {
         _elapsedSeconds = math.max(0, _elapsedSeconds - 6);
         _flowStreak += 2;
-        if (!collectedCrystal) _levelFlavor = 'Zaman kristali';
+        if (!collectedCrystal)
+          _levelFlavor = context.l10n.isTr ? 'Zaman kristali' : 'Time crystal';
       }
       if (collectedCrystal) {
         _crystalIndex++;
         _levelFlavor = _crystalIndex >= _crystalRoute.length
-            ? 'Cikis acildi'
-            : 'Siradaki kristal';
+            ? (context.l10n.isTr ? 'Cikis acildi' : 'Exit opened')
+            : (context.l10n.isTr ? 'Siradaki kristal' : 'Next crystal');
       }
     });
     if (collectedBonus || collectedKey || collectedTime || collectedCrystal) {
       HapticFeedback.mediumImpact();
       _showFeedback(
         collectedKey
-            ? 'ANAHTAR!'
+            ? (context.l10n.isTr ? 'ANAHTAR!' : 'KEY!')
             : collectedCrystal
-                ? 'KRISTAL!'
+                ? (context.l10n.isTr ? 'KRISTAL!' : 'CRYSTAL!')
                 : collectedTime
-                    ? 'ZAMAN +6'
-                    : 'KALKAN +1',
+                    ? (context.l10n.isTr ? 'ZAMAN +6' : 'TIME +6')
+                    : (context.l10n.isTr ? 'KALKAN +1' : 'SHIELD +1'),
         collectedKey ? const Color(0xFF0EA5E9) : const Color(0xFF06B6D4),
       );
     }
@@ -678,7 +720,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
     if (_flowStreak > 0 && _flowStreak % 6 == 0) {
       HapticFeedback.selectionClick();
-      _showFeedback('AKIS x$_flowStreak', _stageAccent);
+      _showFeedback(
+        context.l10n.isTr ? 'AKIS x$_flowStreak' : 'FLOW x$_flowStreak',
+        _stageAccent,
+      );
     }
     if (_unstableCells.contains(updated.head)) {
       _triggerBlast(updated.head);
@@ -831,9 +876,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _rewindsLeft--;
       _state = previous;
       _flowStreak = 0;
-      _levelFlavor = 'Geri sarildi';
+      _levelFlavor = context.l10n.isTr ? 'Geri sarildi' : 'Rewound';
     });
-    _showFeedback('GERI SAR', const Color(0xFF7C3AED));
+    _showFeedback(
+      context.l10n.isTr ? 'GERI SAR' : 'REWIND',
+      const Color(0xFF7C3AED),
+    );
   }
 
   void _useFreezeCard() {
@@ -842,9 +890,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     setState(() {
       _freezeCardsLeft--;
       _timeFrozen = true;
-      _levelFlavor = 'Zaman durdu';
+      _levelFlavor = context.l10n.isTr ? 'Zaman durdu' : 'Time frozen';
     });
-    _showFeedback('ZAMAN DURDU', const Color(0xFF14B8A6));
+    _showFeedback(
+      context.l10n.isTr ? 'ZAMAN DURDU' : 'TIME FROZEN',
+      const Color(0xFF14B8A6),
+    );
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted) setState(() => _timeFrozen = false);
     });
@@ -858,9 +909,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     setState(() {
       _cleanseCardsLeft--;
       _trapCells = _trapCells.difference(removed);
-      _levelFlavor = 'Tuzak temizlendi';
+      _levelFlavor = context.l10n.isTr ? 'Tuzak temizlendi' : 'Traps cleared';
     });
-    _showFeedback('TUZAK TEMIZ', const Color(0xFF16A34A));
+    _showFeedback(
+      context.l10n.isTr ? 'TUZAK TEMIZ' : 'TRAPS CLEARED',
+      const Color(0xFF16A34A),
+    );
   }
 
   List<Cell>? _solutionHintPath() {
@@ -975,6 +1029,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Widget build(BuildContext context) {
     final theme = ref.watch(activeThemeProvider);
     final settings = ref.watch(settingsProvider).valueOrNull;
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final progress = (_state.progressPercent * 100).round();
     final visibleHints = settings?.premiumUnlocked == true
@@ -992,7 +1047,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             moves: _state.moveCount,
             progress: progress,
             goalTitle: _goalTitle(context),
-            goalProgress: _goalProgress,
+            goalProgress: _goalProgress(context),
             hintsLeft: visibleHints,
             flowStreak: _flowStreak,
             shields: _shields,
@@ -1109,11 +1164,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(widget.endless ? 'Sonsuz $_level' : 'BÃ¶lÃ¼m $_level'),
+        title: Text(
+            widget.endless ? l10n.endlessLevel(_level) : l10n.level(_level)),
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: 'Geri al',
+            tooltip: l10n.t('undo'),
             onPressed: () {
               final previous = _state.undo();
               if (previous != null) setState(() => _state = previous);
@@ -1121,7 +1177,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             icon: const Icon(Icons.undo_rounded),
           ),
           IconButton(
-            tooltip: 'NasÄ±l oynanÄ±r?',
+            tooltip: l10n.t('how_to_play'),
             onPressed: () => showModalBottomSheet<void>(
               context: context,
               isScrollControlled: true,
@@ -1365,6 +1421,7 @@ class _MissionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -1440,9 +1497,9 @@ class _MissionPanel extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              _Stat(label: 'Hamle', value: '$moves'),
-              _Stat(label: 'Ä°lerleme', value: '$progress%'),
-              _Stat(label: 'Seri', value: 'x$flowStreak'),
+              _Stat(label: l10n.t('moves_label'), value: '$moves'),
+              _Stat(label: l10n.t('progress_label'), value: '$progress%'),
+              _Stat(label: l10n.t('series'), value: 'x$flowStreak'),
               _ShieldPill(count: shields),
               if (keysLeft > 0) _KeyPill(count: keysLeft),
               const _TargetBadge(),
@@ -1454,19 +1511,19 @@ class _MissionPanel extends StatelessWidget {
             children: [
               _CardPill(
                 icon: Icons.replay_rounded,
-                label: 'Geri',
+                label: l10n.t('rewind'),
                 count: rewindCards,
                 onTap: onRewind,
               ),
               _CardPill(
                 icon: Icons.ac_unit_rounded,
-                label: 'Dondur',
+                label: l10n.t('freeze'),
                 count: freezeCards,
                 onTap: onFreeze,
               ),
               _CardPill(
                 icon: Icons.cleaning_services_rounded,
-                label: 'Temizle',
+                label: l10n.t('cleanse'),
                 count: cleanseCards,
                 onTap: onCleanse,
               ),
@@ -1552,7 +1609,7 @@ class _WinSummary extends StatelessWidget {
           if (perfect) ...[
             const SizedBox(height: 8),
             Text(
-              'Kusursuz rota bonusu!',
+              l10n.isTr ? 'Kusursuz rota bonusu!' : 'Perfect route bonus!',
               style: TextStyle(
                 color: scheme.primary,
                 fontWeight: FontWeight.w900,
@@ -1562,8 +1619,12 @@ class _WinSummary extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             stars == 3
-                ? 'Harika. Bir sonraki bÃ¶lÃ¼m biraz daha Ã§etin.'
-                : 'Devam et; yÄ±ldÄ±zlarÄ± topladÄ±kÃ§a jeton kazanÄ±rsÄ±n.',
+                ? (l10n.isTr
+                    ? 'Harika. Bir sonraki bolum biraz daha cetin.'
+                    : 'Great. The next level gets a little tougher.')
+                : (l10n.isTr
+                    ? 'Devam et; yildizlari topladikca jeton kazanirsin.'
+                    : 'Keep going; stars earn you more coins.'),
             textAlign: TextAlign.center,
             style: TextStyle(color: scheme.onSurface.withOpacity(0.68)),
           ),
@@ -1621,7 +1682,7 @@ class _HintPill extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'Ä°pucu',
+            context.l10n.t('hint'),
             style: TextStyle(
               fontSize: 11,
               color: scheme.onSurface.withOpacity(0.55),
@@ -1774,7 +1835,7 @@ class _TargetBadge extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'Hedef',
+            context.l10n.isTr ? 'Hedef' : 'Target',
             style: TextStyle(
               fontSize: 11,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
@@ -1901,6 +1962,7 @@ class _TutorialSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return FractionallySizedBox(
       heightFactor: 0.9,
       child: SafeArea(
@@ -1913,7 +1975,7 @@ class _TutorialSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'NasÄ±l oynanÄ±r?',
+                      l10n.t('how_to_play'),
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
@@ -1934,30 +1996,26 @@ class _TutorialSheet extends StatelessWidget {
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Column(
-                    children: const [
+                    children: [
                       _TutorialLine(
                         icon: Icons.grid_on_rounded,
-                        title: 'TÃ¼m kareleri boya',
-                        text:
-                            'Mor rotayÄ± aÃ§Ä±k karelerin tamamÄ±ndan geÃ§ir. AynÄ± kareye geri dÃ¶nme.',
+                        title: l10n.t('tutorial_paint_title'),
+                        text: l10n.t('tutorial_paint_text'),
                       ),
                       _TutorialLine(
                         icon: Icons.flag_rounded,
-                        title: 'HEDEF en son',
-                        text:
-                            'Turuncu hedefe erken girme. Ã–nce alanÄ± doldur, sonra hedefe ulaÅŸ.',
+                        title: l10n.t('tutorial_target_title'),
+                        text: l10n.t('tutorial_target_text'),
                       ),
                       _TutorialLine(
                         icon: Icons.touch_app_rounded,
-                        title: 'KaydÄ±r veya yÃ¶n tuÅŸlarÄ±nÄ± kullan',
-                        text:
-                            'Alttaki yÃ¶n tuÅŸlarÄ± ve ekranda kaydÄ±rma aynÄ± ÅŸekilde Ã§alÄ±ÅŸÄ±r.',
+                        title: l10n.t('tutorial_controls_title'),
+                        text: l10n.t('tutorial_controls_text'),
                       ),
                       _TutorialLine(
                         icon: Icons.lightbulb_rounded,
-                        title: 'TakÄ±lÄ±rsan ipucu al',
-                        text:
-                            'Ä°pucu Ã¶nerilen kareyi gÃ¶sterir. Sonraki bÃ¶lÃ¼mlerde anahtar, tuzak ve takip gelir.',
+                        title: l10n.t('tutorial_hint_title'),
+                        text: l10n.t('tutorial_hint_text'),
                       ),
                     ],
                   ),

@@ -77,8 +77,8 @@ class AppLocalizations {
   String endlessLevel(int level) => isTr ? 'Sonsuz $level' : 'Endless $level';
   String moves(int moves) => isTr ? '$moves hamle' : '$moves moves';
   String reward(int reward, int coins) => isTr
-      ? '+$reward jeton  ·  Toplam $coins'
-      : '+$reward coins  ·  Total $coins';
+      ? '+$reward jeton  \u00B7  Toplam $coins'
+      : '+$reward coins  \u00B7  Total $coins';
 }
 
 class _AppLocalizationsDelegate
@@ -105,7 +105,7 @@ class _AppLocalizationsDelegate
 const _values = {
   'tr': {
     'app_title': 'Wrap Maze',
-    'tagline': 'Sarmala · coz · yaris',
+    'tagline': 'Sarmala \u00B7 coz \u00B7 yaris',
     'sign_in_pitch': 'Gercek oyuncularla yarismak icin giris yap.',
     'player_name': 'Oyuncu adi',
     'email': 'E-posta',
@@ -139,6 +139,26 @@ const _values = {
     'total': 'Toplam',
     'rate': 'Oran',
     'series': 'Seri',
+    'moves_label': 'Hamle',
+    'progress_label': 'Ilerleme',
+    'hint': 'Ipucu',
+    'undo': 'Geri al',
+    'rewind': 'Geri',
+    'freeze': 'Dondur',
+    'cleanse': 'Temizle',
+    'how_to_play': 'Nasil oynanir?',
+    'tutorial_paint_title': 'Tum kareleri boya',
+    'tutorial_paint_text':
+        'Mor rotayi acik karelerin tamamindan gecir. Ayni kareye geri donme.',
+    'tutorial_target_title': 'HEDEF en son',
+    'tutorial_target_text':
+        'Turuncu hedefe erken girme. Once alani doldur, sonra hedefe ulas.',
+    'tutorial_controls_title': 'Kaydir veya yon tuslarini kullan',
+    'tutorial_controls_text':
+        'Alttaki yon tuslari ve ekranda kaydirma ayni sekilde calisir.',
+    'tutorial_hint_title': 'Takilirsan ipucu al',
+    'tutorial_hint_text':
+        'Ipucu onerilen kareyi gosterir. Sonraki bolumlerde anahtar, tuzak ve takip gelir.',
     'menu': 'Menu',
     'next_level': 'Sonraki bolum',
     'level_done': 'Bolum tamamlandi',
@@ -156,7 +176,7 @@ const _values = {
   },
   'en': {
     'app_title': 'Wrap Maze',
-    'tagline': 'wrap · solve · race',
+    'tagline': 'wrap \u00B7 solve \u00B7 race',
     'sign_in_pitch': 'Sign in to race with real players.',
     'player_name': 'Player name',
     'email': 'Email',
@@ -190,6 +210,26 @@ const _values = {
     'total': 'Total',
     'rate': 'Rate',
     'series': 'Streak',
+    'moves_label': 'Moves',
+    'progress_label': 'Progress',
+    'hint': 'Hint',
+    'undo': 'Undo',
+    'rewind': 'Undo',
+    'freeze': 'Freeze',
+    'cleanse': 'Clean',
+    'how_to_play': 'How to play',
+    'tutorial_paint_title': 'Paint every tile',
+    'tutorial_paint_text':
+        'Draw the purple route through every open tile. Do not step on the same tile twice.',
+    'tutorial_target_title': 'Target comes last',
+    'tutorial_target_text':
+        'Do not enter the orange target early. Fill the board first, then reach the target.',
+    'tutorial_controls_title': 'Swipe or use direction buttons',
+    'tutorial_controls_text':
+        'The buttons below and swipe controls move the player the same way.',
+    'tutorial_hint_title': 'Use a hint if stuck',
+    'tutorial_hint_text':
+        'Hints show the suggested next tile. Later levels add keys, traps, and chase pressure.',
     'menu': 'Menu',
     'next_level': 'Next level',
     'level_done': 'Level complete',

@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/game_constants.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/providers/settings_provider.dart';
 import '../../core/services/streak_service.dart';
 import '../../core/services/auth_service.dart';
 import '../daily/daily_screen.dart';
@@ -137,7 +139,14 @@ class HomeScreen extends ConsumerWidget {
                               );
                             }
                             if (value == 'logout') {
+                              await ref
+                                  .read(offlineModeProvider.notifier)
+                                  .setOfflineMode(false);
                               await ref.read(authServiceProvider).signOut();
+                              ref.invalidate(authStateProvider);
+                              ref.invalidate(completedLevelsProvider);
+                              ref.invalidate(streakDataProvider);
+                              ref.invalidate(settingsProvider);
                             }
                           },
                           itemBuilder: (context) => [
@@ -228,7 +237,7 @@ class HomeScreen extends ConsumerWidget {
                       childAspectRatio: 1.1,
                       children: [
                         _QuickBtn(
-                          icon: Icons.all_inclusive_rounded,
+                          iconText: '\u221E',
                           label: l10n.t('home_endless'),
                           color: const Color(0xFF0EA5E9).withOpacity(0.14),
                           onTap: () => Navigator.push(
@@ -242,7 +251,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          icon: Icons.sports_martial_arts_rounded,
+                          iconText: '\u{2694}\u{FE0F}',
                           label: l10n.t('home_multiplayer'),
                           color: const Color(0xFFEF4444).withOpacity(0.15),
                           onTap: () => Navigator.push(
@@ -253,7 +262,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          icon: Icons.calendar_month_rounded,
+                          iconText: '17',
                           label: l10n.t('home_daily'),
                           color: const Color(0xFF7C3AED).withOpacity(0.15),
                           onTap: () => Navigator.push(
@@ -264,7 +273,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          icon: Icons.local_fire_department_rounded,
+                          iconText: '\u{1F525}',
                           label: l10n.t('home_streak'),
                           color: const Color(0xFFEA580C).withOpacity(0.15),
                           onTap: () => Navigator.push(
@@ -275,7 +284,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          icon: Icons.emoji_events_rounded,
+                          iconText: '\u{1F3C6}',
                           label: l10n.t('home_leaderboard'),
                           color: scheme.secondaryContainer,
                           onTap: () => Navigator.push(
@@ -286,7 +295,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          icon: Icons.phone_android_rounded,
+                          iconText: '\u{1F4F1}',
                           label: l10n.t('home_local'),
                           color: const Color(0xFF16A34A).withOpacity(0.1),
                           onTap: () => Navigator.push(
@@ -297,7 +306,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          icon: Icons.edit_rounded,
+                          iconText: '\u{270F}\u{FE0F}',
                           label: l10n.t('home_editor'),
                           color: const Color(0xFF7C3AED).withOpacity(0.12),
                           onTap: () => Navigator.push(
@@ -333,7 +342,7 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         const Spacer(),
                         Text(
-                          '${completedSet.length} / 60',
+                          '${completedSet.length} / $totalCampaignLevels',
                           style: TextStyle(
                             fontSize: 13,
                             color: scheme.onSurface.withOpacity(0.4),
@@ -376,7 +385,7 @@ class _WorldMap extends StatelessWidget {
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: 60,
+            itemCount: totalCampaignLevels,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
               mainAxisSpacing: 10,
@@ -504,11 +513,14 @@ class _SummaryCard extends StatelessWidget {
         children: [
           _Stat(l10n.t('completed'), '$count'),
           _div(),
-          _Stat(l10n.t('total'), '60'),
+          _Stat(l10n.t('total'), '$totalCampaignLevels'),
           _div(),
-          _Stat(l10n.t('rate'), '${(count / 60 * 100).round()}%'),
+          _Stat(
+            l10n.t('rate'),
+            '${(count / totalCampaignLevels * 100).round()}%',
+          ),
           _div(),
-          _Stat(l10n.t('series'), '$streak'),
+          _Stat('\u{1F525} ${l10n.t('series')}', '$streak'),
         ],
       ),
     );
@@ -557,13 +569,13 @@ class _Stat extends StatelessWidget {
 // Quick Button
 
 class _QuickBtn extends StatelessWidget {
-  final IconData icon;
+  final String iconText;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
   const _QuickBtn({
-    required this.icon,
+    required this.iconText,
     required this.label,
     required this.color,
     required this.onTap,
@@ -581,7 +593,7 @@ class _QuickBtn extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 28),
+            Text(iconText, style: const TextStyle(fontSize: 29)),
             const SizedBox(height: 4),
             Text(
               label,

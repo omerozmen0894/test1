@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../localization/app_localizations.dart';
+
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
 final authStateProvider = StreamProvider<User?>((ref) {
@@ -8,6 +10,8 @@ final authStateProvider = StreamProvider<User?>((ref) {
 });
 
 final currentUidProvider = Provider<String>((ref) {
+  final offlineMode = ref.watch(offlineModeProvider);
+  if (offlineMode) return 'local';
   final user = ref.watch(authStateProvider).valueOrNull;
   return user?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? 'local';
 });
