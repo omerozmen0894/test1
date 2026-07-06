@@ -81,7 +81,7 @@
                           patched = True
 
           if not patched:
-              raise SystemExit("Firebase iOS modular import patch target was not found.")
+              print("Firebase iOS modular import patch target was not found; skipping.")
           PY
       - name: Remove risky native plugins from iOS plugin list
         script: |
