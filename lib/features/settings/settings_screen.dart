@@ -9,6 +9,7 @@ import '../../core/models/theme_model.dart';
 import '../../core/providers/isar_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/wallet_service.dart';
 import '../game/game_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -21,6 +22,7 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = context.l10n;
     final offlineMode = ref.watch(offlineModeProvider);
     final languageCode = ref.watch(languageCodeProvider) ?? 'system';
+    final coins = ref.watch(coinBalanceProvider).valueOrNull ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -180,6 +182,11 @@ class SettingsScreen extends ConsumerWidget {
                     ref.read(settingsProvider.notifier).setHapticsEnabled(v),
               ),
               const SizedBox(height: 16),
+              _CoinShopCard(
+                coins: coins,
+                premiumUnlocked: value.premiumUnlocked,
+              ),
+              const SizedBox(height: 16),
               Text(l10n.t('theme'),
                   style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
@@ -329,6 +336,115 @@ class SettingsScreen extends ConsumerWidget {
                 : 'Islem tamamlanamadi: $error';
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _CoinShopCard extends ConsumerWidget {
+  static const unlockCost = 250;
+
+  final int coins;
+  final bool premiumUnlocked;
+
+  const _CoinShopCard({
+    required this.coins,
+    required this.premiumUnlocked,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    final canUnlock = coins >= unlockCost && !premiumUnlocked;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7D6),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(Icons.monetization_on_rounded,
+                      color: Color(0xFFF59E0B)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.isTr ? 'Tema marketi' : 'Theme shop',
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      Text(
+                        l10n.isTr ? '$coins jeton' : '$coins coins',
+                        style: TextStyle(
+                          color: scheme.onSurface.withOpacity(0.58),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  premiumUnlocked
+                      ? Icons.verified_rounded
+                      : Icons.lock_open_rounded,
+                  color: premiumUnlocked
+                      ? const Color(0xFF22C55E)
+                      : scheme.primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              premiumUnlocked
+                  ? (l10n.isTr
+                      ? 'Premium temalar acik.'
+                      : 'Premium themes are unlocked.')
+                  : (l10n.isTr
+                      ? '250 jetonla Orman, Gece, Gun Batimi ve Neon temalarini ac.'
+                      : 'Unlock Forest, Midnight, Sunset, and Neon themes for 250 coins.'),
+              style: TextStyle(color: scheme.onSurface.withOpacity(0.68)),
+            ),
+            if (!premiumUnlocked) ...[
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: canUnlock
+                    ? () async {
+                        final uid = ref.read(currentUidProvider);
+                        final spent = await ref
+                            .read(walletServiceProvider)
+                            .spend(uid, unlockCost);
+                        if (!spent) return;
+                        await ref
+                            .read(settingsProvider.notifier)
+                            .setPremiumUnlocked(true);
+                        ref.invalidate(coinBalanceProvider);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.isTr
+                                ? 'Premium temalar acildi.'
+                                : 'Premium themes unlocked.'),
+                          ),
+                        );
+                      }
+                    : null,
+                icon: const Icon(Icons.auto_awesome_rounded),
+                label:
+                    Text(l10n.isTr ? '250 jetonla ac' : 'Unlock for 250 coins'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 

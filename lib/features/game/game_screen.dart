@@ -15,7 +15,9 @@ import '../../core/models/theme_model.dart';
 import '../../core/providers/isar_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/daily_quest_service.dart';
 import '../../core/services/leaderboard_service.dart';
+import '../../core/services/wallet_service.dart';
 import 'game_provider.dart';
 import 'gesture_handler.dart';
 import 'maze_painter.dart';
@@ -40,7 +42,6 @@ class GameScreen extends ConsumerStatefulWidget {
 
 class _GameScreenState extends ConsumerState<GameScreen> {
   static const _tutorialKey = 'wrap_maze_tutorial_seen_v3';
-  static const _coinsKey = 'wrap_maze_coins';
 
   late int _level;
   late GameState _state;
@@ -190,10 +191,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Future<void> _loadCoins() async {
-    final prefs = await SharedPreferences.getInstance();
     final uid = ref.read(currentUidProvider);
+    final coins = await ref.read(walletServiceProvider).balance(uid);
     if (!mounted) return;
-    setState(() => _coins = prefs.getInt('${_coinsKey}_$uid') ?? 0);
+    setState(() => _coins = coins);
   }
 
   bool get _hasEnemy => _level >= 4 && _level % 3 == 0;
@@ -734,12 +735,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (won) {
       HapticFeedback.mediumImpact();
       final winningState = _state.copyWith(isWon: true);
-      await _saveWin(winningState.moveCount);
-      if (!mounted) return;
       final usedHints = _hintsUsed;
       final stars = _starsForWin(winningState.moveCount, usedHints);
       final reward = _rewardForWin(stars, winningState.moveCount, usedHints);
-      await _addCoins(reward);
+      await _saveWin(winningState.moveCount);
+      final questReward = widget.endless || _state.maze.isCustom
+          ? const DailyQuestReward(coins: 0, titlesTr: [], titlesEn: [])
+          : await ref.read(dailyQuestServiceProvider).recordLevelWin(
+                uid: ref.read(currentUidProvider),
+                stars: stars,
+                noHint: usedHints == 0,
+              );
+      await _addCoins(reward + questReward.coins);
+      ref.invalidate(dailyQuestSnapshotProvider);
       if (!mounted) return;
       final l10n = context.l10n;
       final nextLevel = await showDialog<bool>(
@@ -753,6 +761,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             stars: stars,
             reward: reward,
             coins: _coins,
+            questReward: questReward,
             perfect: usedHints == 0 &&
                 updated.moveCount == updated.maze.totalCells - 1,
           ),
@@ -829,11 +838,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Future<void> _addCoins(int amount) async {
-    final prefs = await SharedPreferences.getInstance();
+    if (amount <= 0) return;
     final uid = ref.read(currentUidProvider);
-    final key = '${_coinsKey}_$uid';
-    final nextCoins = (prefs.getInt(key) ?? _coins) + amount;
-    await prefs.setInt(key, nextCoins);
+    final nextCoins = await ref.read(walletServiceProvider).add(uid, amount);
+    ref.invalidate(coinBalanceProvider);
     if (mounted) setState(() => _coins = nextCoins);
   }
 
@@ -1550,6 +1558,7 @@ class _WinSummary extends StatelessWidget {
   final int stars;
   final int reward;
   final int coins;
+  final DailyQuestReward questReward;
   final bool perfect;
 
   const _WinSummary({
@@ -1557,6 +1566,7 @@ class _WinSummary extends StatelessWidget {
     required this.stars,
     required this.reward,
     required this.coins,
+    required this.questReward,
     required this.perfect,
   });
 
@@ -1613,6 +1623,48 @@ class _WinSummary extends StatelessWidget {
               style: TextStyle(
                 color: scheme.primary,
                 fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+          if (questReward.hasReward) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer.withOpacity(0.55),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: scheme.primary.withOpacity(0.18)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.task_alt_rounded,
+                          size: 18, color: scheme.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        l10n.isTr
+                            ? 'Gunluk gorev +${questReward.coins}'
+                            : 'Daily quest +${questReward.coins}',
+                        style: TextStyle(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    (l10n.isTr ? questReward.titlesTr : questReward.titlesEn)
+                        .join(' \u00B7 '),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: scheme.onSurface.withOpacity(0.66),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

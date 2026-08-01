@@ -231,8 +231,8 @@
         script: |
           flutter build ipa --release \
             --no-pub \
-            --build-name=1.0.24 \
-            --build-number=61 \
+            --build-name=1.1.0 \
+            --build-number=62 \
             --export-method=app-store
     artifacts:
       - build/ios/ipa/*.ipa

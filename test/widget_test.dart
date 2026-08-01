@@ -5,6 +5,8 @@ import 'package:wrap_maze/core/game_constants.dart';
 import 'package:wrap_maze/core/maze_generator.dart';
 import 'package:wrap_maze/core/providers/isar_provider.dart';
 import 'package:wrap_maze/core/services/auth_service.dart';
+import 'package:wrap_maze/core/services/daily_quest_service.dart';
+import 'package:wrap_maze/core/services/wallet_service.dart';
 import 'package:wrap_maze/features/game/game_provider.dart';
 
 void main() {
@@ -40,5 +42,41 @@ void main() {
     final restored = await container.read(completedLevelsProvider.future);
 
     expect(restored.map((p) => p.levelNumber), contains(7));
+  });
+
+  test('wallet keeps a device fallback balance', () async {
+    SharedPreferences.setMockInitialValues({});
+    final wallet = WalletService();
+
+    await wallet.add('user-a', 40);
+
+    expect(await wallet.balance('user-b'), 40);
+    expect(await wallet.spend('user-b', 25), isTrue);
+    expect(await wallet.balance('user-a'), 15);
+  });
+
+  test('daily quests grant rewards once', () async {
+    SharedPreferences.setMockInitialValues({});
+    final quests = DailyQuestService();
+
+    final first = await quests.recordLevelWin(
+      uid: 'local',
+      stars: 3,
+      noHint: true,
+    );
+    final second = await quests.recordLevelWin(
+      uid: 'local',
+      stars: 3,
+      noHint: false,
+    );
+    final third = await quests.recordLevelWin(
+      uid: 'local',
+      stars: 3,
+      noHint: false,
+    );
+
+    expect(first.coins, 25);
+    expect(second.coins, 50);
+    expect(third.coins, 0);
   });
 }

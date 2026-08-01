@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/game_constants.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/services/daily_quest_service.dart';
 import '../../core/services/streak_service.dart';
 import '../../core/services/auth_service.dart';
 import '../daily/daily_screen.dart';
@@ -33,6 +34,7 @@ class HomeScreen extends ConsumerWidget {
     final nextLevel = _nextPlayableLevel(completedSet);
     final streakAsync = ref.watch(streakDataProvider);
     final streak = streakAsync.valueOrNull;
+    final questsAsync = ref.watch(dailyQuestSnapshotProvider);
     final screenSize = MediaQuery.sizeOf(context);
     final isTablet = screenSize.shortestSide >= 600;
 
@@ -231,6 +233,21 @@ class HomeScreen extends ConsumerWidget {
                     child: _ContinueLevelButton(
                       level: nextLevel,
                       allDone: completedSet.length >= totalCampaignLevels,
+                    ),
+                  ),
+                ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      isTablet ? 32 : 24,
+                      14,
+                      isTablet ? 32 : 24,
+                      0,
+                    ),
+                    child: questsAsync.maybeWhen(
+                      data: (snapshot) => _DailyQuestCard(snapshot: snapshot),
+                      orElse: () => const SizedBox.shrink(),
                     ),
                   ),
                 ),
@@ -465,6 +482,139 @@ class _ContinueLevelButton extends StatelessWidget {
   }
 }
 
+class _DailyQuestCard extends StatelessWidget {
+  final DailyQuestSnapshot snapshot;
+
+  const _DailyQuestCard({required this.snapshot});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    final nextQuest = snapshot.quests.firstWhere(
+      (quest) => !quest.claimed,
+      orElse: () => snapshot.quests.last,
+    );
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: scheme.primary.withOpacity(0.14)),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.primary.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF7D6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.bolt_rounded, color: Color(0xFFF59E0B)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.t('daily_quests'),
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    Text(
+                      l10n.isTr
+                          ? '${snapshot.completedCount}/${snapshot.totalCount} tamamlandi'
+                          : '${snapshot.completedCount}/${snapshot.totalCount} complete',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: scheme.onSurface.withOpacity(0.55),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '+${nextQuest.reward}',
+                style: const TextStyle(
+                  color: Color(0xFFF59E0B),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (final quest in snapshot.quests)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    quest.claimed
+                        ? Icons.check_circle_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    size: 18,
+                    color: quest.claimed
+                        ? const Color(0xFF22C55E)
+                        : scheme.outline,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.isTr ? quest.titleTr : quest.titleEn,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(99),
+                          child: LinearProgressIndicator(
+                            value: quest.ratio,
+                            minHeight: 5,
+                            backgroundColor: scheme.surfaceContainerHighest,
+                            valueColor: AlwaysStoppedAnimation(
+                              quest.claimed
+                                  ? const Color(0xFF22C55E)
+                                  : scheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${quest.progress.clamp(0, quest.target)}/${quest.target}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: scheme.onSurface.withOpacity(0.55),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _WorldMap extends StatelessWidget {
   final Set<int> completedSet;
 
@@ -474,32 +624,23 @@ class _WorldMap extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
-    const columns = 5;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 20),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: totalCampaignLevels,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1,
-            ),
-            itemBuilder: (context, index) {
-              final level = index + 1;
-              return Center(
-                child: _MapNode(
-                  level: level,
-                  completedSet: completedSet,
-                  color: _zoneColor(index ~/ 5, scheme),
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: Column(
+            children: [
+              for (var zone = 0; zone < totalCampaignLevels ~/ 10; zone++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _ZoneBlock(
+                    zone: zone,
+                    completedSet: completedSet,
+                    color: _zoneColor(zone, scheme),
+                  ),
                 ),
-              );
-            },
+            ],
           ),
         ),
       ),
@@ -507,11 +648,90 @@ class _WorldMap extends StatelessWidget {
   }
 
   Color _zoneColor(int row, ColorScheme scheme) {
-    if (row >= 10) return const Color(0xFFDC2626);
-    if (row >= 8) return const Color(0xFF7C3AED);
-    if (row >= 6) return const Color(0xFF0EA5E9);
-    if (row >= 4) return const Color(0xFFF97316);
+    if (row >= 8) return const Color(0xFFDC2626);
+    if (row >= 6) return const Color(0xFF7C3AED);
+    if (row >= 4) return const Color(0xFF0EA5E9);
+    if (row >= 2) return const Color(0xFFF97316);
     return scheme.primary;
+  }
+}
+
+class _ZoneBlock extends StatelessWidget {
+  final int zone;
+  final Set<int> completedSet;
+  final Color color;
+
+  const _ZoneBlock({
+    required this.zone,
+    required this.completedSet,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final start = zone * 10 + 1;
+    final end = start + 9;
+    final completedInZone = [
+      for (var level = start; level <= end; level++)
+        if (completedSet.contains(level)) level
+    ].length;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.map_rounded, size: 18, color: color),
+              const SizedBox(width: 6),
+              Text(
+                context.l10n.isTr ? '${zone + 1}. Bolge' : 'Zone ${zone + 1}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: scheme.onSurface,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$completedInZone/10',
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 10,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 5,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 1,
+            ),
+            itemBuilder: (context, index) {
+              final level = start + index;
+              return Center(
+                child: _MapNode(
+                  level: level,
+                  completedSet: completedSet,
+                  color: color,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 
