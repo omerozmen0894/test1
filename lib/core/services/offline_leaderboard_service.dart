@@ -4,8 +4,7 @@ import 'package:isar/isar.dart';
 import '../database/progress_model.dart';
 import '../providers/isar_provider.dart';
 
-final offlineLeaderboardProvider =
-    Provider<OfflineLeaderboardService>((ref) {
+final offlineLeaderboardProvider = Provider<OfflineLeaderboardService>((ref) {
   return OfflineLeaderboardService(ref.read(isarProvider));
 });
 

@@ -56,7 +56,8 @@ class StreakData {
     return streak;
   }
 
-  static List<BadgeInfo> _checkBadges(int streak, int best, List<BadgeInfo> existing) {
+  static List<BadgeInfo> _checkBadges(
+      int streak, int best, List<BadgeInfo> existing) {
     final existingIds = existing.map((b) => b.id).toSet();
     final toAdd = <BadgeInfo>[];
 
@@ -75,8 +76,10 @@ class StreakData {
   }
 
   factory StreakData.empty() => const StreakData(
-        currentStreak: 0, bestStreak: 0,
-        completedDays: [], unlockedBadges: [],
+        currentStreak: 0,
+        bestStreak: 0,
+        completedDays: [],
+        unlockedBadges: [],
       );
 
   Map<String, dynamic> toMap() => {
@@ -106,18 +109,25 @@ class BadgeInfo {
   final DateTime unlockedAt;
 
   const BadgeInfo({
-    required this.id, required this.emoji,
-    required this.title, required this.description,
+    required this.id,
+    required this.emoji,
+    required this.title,
+    required this.description,
     required this.unlockedAt,
   });
 
   Map<String, dynamic> toMap() => {
-        'id': id, 'emoji': emoji, 'title': title,
-        'description': description, 'unlockedAt': unlockedAt.toIso8601String(),
+        'id': id,
+        'emoji': emoji,
+        'title': title,
+        'description': description,
+        'unlockedAt': unlockedAt.toIso8601String(),
       };
 
   factory BadgeInfo.fromMap(Map m) => BadgeInfo(
-        id: m['id'], emoji: m['emoji'], title: m['title'],
+        id: m['id'],
+        emoji: m['emoji'],
+        title: m['title'],
         description: m['description'],
         unlockedAt: DateTime.parse(m['unlockedAt']),
       );
@@ -125,32 +135,44 @@ class BadgeInfo {
 
 class Badge {
   static BadgeInfo get streak3 => BadgeInfo(
-        id: 'streak_3', emoji: '🔥', title: '3 Günlük Seri',
+        id: 'streak_3',
+        emoji: '🔥',
+        title: '3 Günlük Seri',
         description: '3 gün üst üste günlük bölümü tamamla',
         unlockedAt: DateTime.now(),
       );
   static BadgeInfo get streak7 => BadgeInfo(
-        id: 'streak_7', emoji: '⚡', title: 'Haftalık Seri',
+        id: 'streak_7',
+        emoji: '⚡',
+        title: 'Haftalık Seri',
         description: '7 gün üst üste günlük bölümü tamamla',
         unlockedAt: DateTime.now(),
       );
   static BadgeInfo get streak14 => BadgeInfo(
-        id: 'streak_14', emoji: '💎', title: '2 Haftalık Seri',
+        id: 'streak_14',
+        emoji: '💎',
+        title: '2 Haftalık Seri',
         description: '14 gün üst üste tamamla',
         unlockedAt: DateTime.now(),
       );
   static BadgeInfo get streak30 => BadgeInfo(
-        id: 'streak_30', emoji: '👑', title: 'Aylık Seri',
+        id: 'streak_30',
+        emoji: '👑',
+        title: 'Aylık Seri',
         description: '30 gün üst üste tamamla',
         unlockedAt: DateTime.now(),
       );
   static BadgeInfo get bestWeek => BadgeInfo(
-        id: 'best_week', emoji: '🏅', title: 'Hafta Rekoru',
+        id: 'best_week',
+        emoji: '🏅',
+        title: 'Hafta Rekoru',
         description: 'En iyi serin 7 güne ulaştı',
         unlockedAt: DateTime.now(),
       );
   static BadgeInfo get bestMonth => BadgeInfo(
-        id: 'best_month', emoji: '🏆', title: 'Ay Rekoru',
+        id: 'best_month',
+        emoji: '🏆',
+        title: 'Ay Rekoru',
         description: 'En iyi serin 30 güne ulaştı',
         unlockedAt: DateTime.now(),
       );

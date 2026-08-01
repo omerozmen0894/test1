@@ -16,7 +16,8 @@ class StreakScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F6),
+      backgroundColor:
+          isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F6),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -47,7 +48,8 @@ class StreakScreen extends ConsumerWidget {
             // ── Rozetler ─────────────────────────────────────────────────
             Text('Rozetler',
                 style: TextStyle(
-                    fontSize: 17, fontWeight: FontWeight.w600,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
                     color: scheme.onSurface)),
             const SizedBox(height: 12),
             _BadgeGrid(streak: streak),
@@ -57,7 +59,8 @@ class StreakScreen extends ConsumerWidget {
             // ── Hedefler ─────────────────────────────────────────────────
             Text('Hedefler',
                 style: TextStyle(
-                    fontSize: 17, fontWeight: FontWeight.w600,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
                     color: scheme.onSurface)),
             const SizedBox(height: 12),
             ..._buildGoals(streak, scheme),
@@ -124,8 +127,7 @@ class StreakScreen extends ConsumerWidget {
                         ? 'Tamamlandı!'
                         : '${streak.currentStreak} / ${g.$1} gün',
                     style: TextStyle(
-                        fontSize: 11,
-                        color: scheme.onSurface.withOpacity(0.5)),
+                        fontSize: 11, color: scheme.onSurface.withOpacity(0.5)),
                   ),
                 ],
               ),
@@ -166,13 +168,14 @@ class _StreakHero extends StatelessWidget {
               Text(
                 '${streak.currentStreak}',
                 style: const TextStyle(
-                    fontSize: 56, fontWeight: FontWeight.w800,
-                    color: Colors.white, height: 1),
+                    fontSize: 56,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1),
               ),
               Text('günlük seri 🔥',
                   style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.9))),
+                      fontSize: 16, color: Colors.white.withOpacity(0.9))),
             ],
           ),
           const Spacer(),
@@ -184,13 +187,16 @@ class _StreakHero extends StatelessWidget {
                       fontSize: 12, color: Colors.white.withOpacity(0.7))),
               Text('${streak.bestStreak} gün',
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white)),
               const SizedBox(height: 8),
-              Text(streak.hasCompletedToday ? '✅ Bugün tamam!' : '⏳ Bugün henüz yok',
+              Text(
+                  streak.hasCompletedToday
+                      ? '✅ Bugün tamam!'
+                      : '⏳ Bugün henüz yok',
                   style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.85))),
+                      fontSize: 12, color: Colors.white.withOpacity(0.85))),
             ],
           ),
         ],
@@ -217,7 +223,8 @@ class _CalendarView extends StatelessWidget {
       children: [
         Text('Son 4 Hafta',
             style: TextStyle(
-                fontSize: 17, fontWeight: FontWeight.w600,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
                 color: scheme.onSurface)),
         const SizedBox(height: 12),
         // Gün başlıkları
@@ -227,8 +234,7 @@ class _CalendarView extends StatelessWidget {
               child: Text(d,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontSize: 11,
-                      color: scheme.onSurface.withOpacity(0.4))),
+                      fontSize: 11, color: scheme.onSurface.withOpacity(0.4))),
             );
           }).toList(),
         ),
@@ -238,7 +244,9 @@ class _CalendarView extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7, mainAxisSpacing: 4, crossAxisSpacing: 4,
+            crossAxisCount: 7,
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
           ),
           itemCount: days.length,
           itemBuilder: (ctx, i) {
@@ -295,15 +303,21 @@ class _BadgeGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final allBadges = [
-      Badge.streak3, Badge.streak7, Badge.streak14,
-      Badge.streak30, Badge.bestWeek, Badge.bestMonth,
+      Badge.streak3,
+      Badge.streak7,
+      Badge.streak14,
+      Badge.streak30,
+      Badge.bestWeek,
+      Badge.bestMonth,
     ];
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3, mainAxisSpacing: 10, crossAxisSpacing: 10,
+        crossAxisCount: 3,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
         childAspectRatio: 0.9,
       ),
       itemCount: allBadges.length,
@@ -333,8 +347,7 @@ class _BadgeGrid extends StatelessWidget {
               Text(
                 template.emoji,
                 style: TextStyle(
-                    fontSize: 28,
-                    color: unlocked ? null : Colors.black),
+                    fontSize: 28, color: unlocked ? null : Colors.black),
               ),
               const SizedBox(height: 6),
               Text(
@@ -352,8 +365,7 @@ class _BadgeGrid extends StatelessWidget {
                 Text(
                   DateFormat('d MMM', 'tr_TR').format(info.unlockedAt),
                   style: TextStyle(
-                      fontSize: 10,
-                      color: scheme.onSurface.withOpacity(0.45)),
+                      fontSize: 10, color: scheme.onSurface.withOpacity(0.45)),
                 ),
               ] else
                 Text('Kilitli',
@@ -362,7 +374,10 @@ class _BadgeGrid extends StatelessWidget {
                         color: scheme.onSurface.withOpacity(0.25))),
             ],
           ),
-        ).animate(delay: (i * 60).ms).fadeIn().scale(begin: const Offset(0.8, 0.8));
+        )
+            .animate(delay: (i * 60).ms)
+            .fadeIn()
+            .scale(begin: const Offset(0.8, 0.8));
       },
     );
   }

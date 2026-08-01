@@ -32,8 +32,7 @@ class MultiplayerService {
           ? _auth.currentUser!.displayName!
           : 'Oyuncu';
 
-  DatabaseReference _roomRef(String code) =>
-      _db.ref('rooms/$code');
+  DatabaseReference _roomRef(String code) => _db.ref('rooms/$code');
 
   // ─── Oda oluştur ─────────────────────────────────────────────────────────
 
@@ -77,13 +76,13 @@ class MultiplayerService {
     if (room.isFull || room.status != RoomStatus.waiting) return false;
 
     await ref.child('players/$_uid').set(PlayerData(
-      uid: _uid,
-      displayName: _displayName,
-      path: [],
-      moveCount: 0,
-      finished: false,
-      status: PlayerStatus.connected,
-    ).toMap());
+          uid: _uid,
+          displayName: _displayName,
+          path: [],
+          moveCount: 0,
+          finished: false,
+          status: PlayerStatus.connected,
+        ).toMap());
 
     return true;
   }

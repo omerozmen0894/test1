@@ -175,7 +175,8 @@ class _DemoGameScreenState extends State<DemoGameScreen> {
                           children: [
                             const Text(
                               'Wrap Maze',
-                              style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
+                              style: TextStyle(
+                                  fontSize: 30, fontWeight: FontWeight.w800),
                             ),
                             Text(
                               _autoPlaying
@@ -194,7 +195,8 @@ class _DemoGameScreenState extends State<DemoGameScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   child: Row(
                     children: [
                       _Stat(label: 'Level', value: '$_level'),
@@ -214,7 +216,8 @@ class _DemoGameScreenState extends State<DemoGameScreen> {
                         child: Center(
                           child: LayoutBuilder(
                             builder: (context, constraints) {
-                              final side = constraints.biggest.shortestSide.clamp(280.0, 620.0);
+                              final side = constraints.biggest.shortestSide
+                                  .clamp(280.0, 620.0);
                               return _SwipeHandler(
                                 onMove: _move,
                                 child: CustomPaint(
@@ -244,25 +247,32 @@ class _DemoGameScreenState extends State<DemoGameScreen> {
                   child: Column(
                     children: [
                       IconButton.filledTonal(
-                        onPressed: _autoPlaying ? null : () => _move(Direction.up),
+                        onPressed:
+                            _autoPlaying ? null : () => _move(Direction.up),
                         icon: const Icon(Icons.keyboard_arrow_up_rounded),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           IconButton.filledTonal(
-                            onPressed: _autoPlaying ? null : () => _move(Direction.left),
+                            onPressed: _autoPlaying
+                                ? null
+                                : () => _move(Direction.left),
                             icon: const Icon(Icons.keyboard_arrow_left_rounded),
                           ),
                           const SizedBox(width: 36),
                           IconButton.filledTonal(
-                            onPressed: _autoPlaying ? null : () => _move(Direction.right),
-                            icon: const Icon(Icons.keyboard_arrow_right_rounded),
+                            onPressed: _autoPlaying
+                                ? null
+                                : () => _move(Direction.right),
+                            icon:
+                                const Icon(Icons.keyboard_arrow_right_rounded),
                           ),
                         ],
                       ),
                       IconButton.filledTonal(
-                        onPressed: _autoPlaying ? null : () => _move(Direction.down),
+                        onPressed:
+                            _autoPlaying ? null : () => _move(Direction.down),
                         icon: const Icon(Icons.keyboard_arrow_down_rounded),
                       ),
                     ],
@@ -398,7 +408,8 @@ class _GuideCard extends StatelessWidget {
                       const Expanded(
                         child: Text(
                           'Nasıl oynanır?',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w800),
                         ),
                       ),
                       IconButton(
@@ -414,7 +425,8 @@ class _GuideCard extends StatelessWidget {
                   ),
                   const _GuideLine(
                     icon: Icons.flag_rounded,
-                    text: 'Bölüm yalnızca en son mavi karede bitince tamamlanır.',
+                    text:
+                        'Bölüm yalnızca en son mavi karede bitince tamamlanır.',
                   ),
                   const _GuideLine(
                     icon: Icons.swipe_rounded,
@@ -427,7 +439,9 @@ class _GuideCard extends StatelessWidget {
                         child: FilledButton.icon(
                           onPressed: autoPlaying ? null : onDemo,
                           icon: const Icon(Icons.play_arrow_rounded),
-                          label: Text(autoPlaying ? 'Demo oynuyor' : 'İlk bölümü göster'),
+                          label: Text(autoPlaying
+                              ? 'Demo oynuyor'
+                              : 'İlk bölümü göster'),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -538,7 +552,8 @@ class _RankingPanel extends StatelessWidget {
                       Text('${score.moves} hamle'),
                       if (score.automatic) ...[
                         const SizedBox(width: 6),
-                        Icon(Icons.smart_toy_rounded, size: 16, color: scheme.primary),
+                        Icon(Icons.smart_toy_rounded,
+                            size: 16, color: scheme.primary),
                       ],
                     ],
                   ),
@@ -575,8 +590,14 @@ class _Stat extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: scheme.primary)),
-          Text(label, style: TextStyle(fontSize: 12, color: scheme.onSurface.withOpacity(0.55))),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: scheme.primary)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12, color: scheme.onSurface.withOpacity(0.55))),
         ],
       ),
     );

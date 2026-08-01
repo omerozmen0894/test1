@@ -17,7 +17,9 @@ import '../../core/providers/settings_provider.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/daily_quest_service.dart';
 import '../../core/services/leaderboard_service.dart';
+import '../../core/services/sound_service.dart';
 import '../../core/services/wallet_service.dart';
+import '../../core/services/weekly_event_service.dart';
 import 'game_provider.dart';
 import 'gesture_handler.dart';
 import 'maze_painter.dart';
@@ -77,6 +79,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Set<Cell> _blastWaveCells = const {};
   Set<Cell> _keyCells = const {};
   Set<Cell> _gateCells = const {};
+  Map<Cell, Cell> _portalPairs = const {};
+  Map<Cell, Direction> _oneWayCells = const {};
   bool _levelIntro = true;
   String? _feedbackText;
   Color _feedbackColor = const Color(0xFF7C3AED);
@@ -100,6 +104,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     };
     _keyCells = _keyCellsFor(_state.maze, _level);
     _gateCells = _gateCellsFor(_state.maze, _level);
+    _portalPairs = _portalPairsFor(_state.maze, _level);
+    _oneWayCells = _oneWayCellsFor(_state.maze, _level);
     _enemy = (_hasEnemy || _isBossLevel) ? _state.maze.end : null;
     _startedAt = DateTime.now();
     _startPulseTimer();
@@ -204,6 +210,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   bool get _hasTimeBonus =>
       _level >= 6 && (_hasTimer || _goal == _LevelGoal.crystalOrder);
   bool get _isBossLevel => _level > 0 && _level % 10 == 0;
+  bool get _hasMoveLimit => _level >= 12 && (_level % 6 == 0 || _isBossLevel);
+
+  int? get _moveLimit {
+    if (!_hasMoveLimit) return null;
+    final slack = _isBossLevel ? 8 : 5;
+    return _state.maze.totalCells - 1 + slack;
+  }
 
   int get _timeTarget {
     final base = _state.maze.totalCells * 2;
@@ -260,6 +273,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (level == 2) return l10n.isTr ? 'Anahtari Bul' : 'Find the Key';
     if (level == 3) return l10n.isTr ? 'Ilk Bomba' : 'First Blast';
     if (level == 4) return l10n.isTr ? 'Zamana Karsi' : 'Beat the Clock';
+    if (level >= 18 && level % 7 == 4) {
+      return l10n.isTr ? 'Portal Gecidi' : 'Portal Gate';
+    }
+    if (level >= 14 && level % 6 == 2) {
+      return l10n.isTr ? 'Tek Yon Akisi' : 'One-Way Flow';
+    }
     if (level >= 7 && level % 4 == 3) {
       return l10n.isTr ? 'Anahtar Kilidi' : 'Key Lock';
     }
@@ -395,8 +414,43 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         .toList();
   }
 
+  Map<Cell, Cell> _portalPairsFor(MazeConfig maze, int level) {
+    if (level < 18 || level % 7 != 4) return const {};
+    final solution = MazeSolver.solve(maze);
+    if (solution == null || solution.length < 18) return const {};
+    final entryIndex = (solution.length * 0.42).floor();
+    final entry = solution[entryIndex];
+    final exit = solution[entryIndex + 1];
+    if (entry == maze.start || exit == maze.end) return const {};
+    return {entry: exit};
+  }
+
+  Map<Cell, Direction> _oneWayCellsFor(MazeConfig maze, int level) {
+    if (level < 14 || level % 6 != 2) return const {};
+    final solution = MazeSolver.solve(maze);
+    if (solution == null || solution.length < 16) return const {};
+    final cells = <Cell, Direction>{};
+    for (final factor in const [0.32, 0.64]) {
+      final index = (solution.length * factor).floor();
+      if (index <= 0 || index + 1 >= solution.length) continue;
+      final cell = solution[index];
+      final next = solution[index + 1];
+      if (cell == maze.start || cell == maze.end) continue;
+      cells[cell] = _directionBetween(cell, next);
+    }
+    return cells;
+  }
+
+  Direction _directionBetween(Cell from, Cell to) {
+    if (to.row < from.row) return Direction.up;
+    if (to.row > from.row) return Direction.down;
+    if (to.col < from.col) return Direction.left;
+    return Direction.right;
+  }
+
   void _triggerBlast(Cell cell) {
     HapticFeedback.heavyImpact();
+    unawaited(ref.read(soundServiceProvider).play(SoundCue.blast));
     final solution = MazeSolver.solve(_state.maze) ?? const <Cell>[];
     final blastWave = {
       cell,
@@ -453,6 +507,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       return;
     }
     HapticFeedback.heavyImpact();
+    unawaited(ref.read(soundServiceProvider).play(SoundCue.enemy));
 
     if (_shields > 0) {
       setState(() {
@@ -494,6 +549,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _handleTimeExpired() {
     if (!_hasTimer || _timeFrozen || _state.isWon) return;
     HapticFeedback.heavyImpact();
+    unawaited(ref.read(soundServiceProvider).play(SoundCue.enemy));
     final blockedByShield = _shields > 0;
     setState(() {
       _flowStreak = 0;
@@ -611,10 +667,27 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Future<void> _move(Direction direction) async {
     _tapHaptic();
+    final forced = _oneWayCells[_state.head];
+    if (forced != null && forced != direction) {
+      HapticFeedback.lightImpact();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.blocked));
+      _showFeedback(
+          context.l10n.isTr ? 'TEK YON' : 'ONE WAY', const Color(0xFF0EA5E9));
+      return;
+    }
+    final moveLimit = _moveLimit;
+    if (moveLimit != null && _state.moveCount >= moveLimit) {
+      HapticFeedback.lightImpact();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.blocked));
+      _showFeedback(context.l10n.isTr ? 'HAMLE LIMITI' : 'MOVE LIMIT',
+          const Color(0xFFEF4444));
+      return;
+    }
     final next = _state.head.offset(direction.dr, direction.dc);
     if (_keyCells.isNotEmpty &&
         (_gateCells.contains(next) || next == _state.maze.end)) {
       HapticFeedback.lightImpact();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.blocked));
       setState(() {
         _flowStreak = 0;
         _levelFlavor =
@@ -628,6 +701,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         _state.path.length + 1 < _state.maze.totalCells &&
         !_canEnterExitEarly(next)) {
       HapticFeedback.lightImpact();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.blocked));
       setState(() {
         _flowStreak = 0;
         _levelFlavor = context.l10n.isTr ? 'Hedef en son' : 'Target comes last';
@@ -638,6 +712,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
     if (_rubbleCells.contains(next)) {
       HapticFeedback.lightImpact();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.blocked));
       setState(() {
         _flowStreak = 0;
         _levelFlavor =
@@ -651,6 +726,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         _crystalRoute.contains(next) &&
         _crystalRoute.indexOf(next) != _crystalIndex) {
       HapticFeedback.lightImpact();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.blocked));
       setState(() {
         _flowStreak = 0;
         _levelFlavor = context.l10n.isTr
@@ -664,23 +740,46 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final updated = _state.tryMove(next);
     if (updated == null) {
       HapticFeedback.lightImpact();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.blocked));
       setState(() => _flowStreak = 0);
       return;
     }
 
-    final collectedBonus = _bonusCells.contains(updated.head);
-    final collectedKey = _keyCells.contains(updated.head);
-    final collectedTime = _timeBonusCells.contains(updated.head);
+    var nextState = updated;
+    final portalExit = _portalPairs[updated.head];
+    final usedPortal = portalExit != null &&
+        !_state.inPath(portalExit) &&
+        portalExit != updated.maze.end;
+    if (usedPortal) {
+      nextState = updated.copyWith(
+        path: [...updated.path, portalExit],
+        moveCount: updated.moveCount + 1,
+        history: [
+          ...updated.history,
+          [...updated.path]
+        ],
+      );
+    }
+
+    final collectedBonus = _bonusCells.contains(nextState.head);
+    final collectedKey = _keyCells.contains(nextState.head);
+    final collectedTime = _timeBonusCells.contains(nextState.head);
     final collectedCrystal = _goal == _LevelGoal.crystalOrder &&
         _crystalIndex < _crystalRoute.length &&
-        updated.head == _crystalRoute[_crystalIndex];
-    final hitTrap = _trapCells.contains(updated.head);
+        nextState.head == _crystalRoute[_crystalIndex];
+    final hitTrap = _trapCells.contains(nextState.head);
     setState(() {
-      _flowStreak += collectedBonus || collectedKey || collectedCrystal ? 3 : 1;
-      _state = updated.copyWith(hintPath: const []);
-      _bonusCells = _bonusCells.difference({updated.head});
-      _keyCells = _keyCells.difference({updated.head});
-      _timeBonusCells = _timeBonusCells.difference({updated.head});
+      _flowStreak +=
+          collectedBonus || collectedKey || collectedCrystal || usedPortal
+              ? 3
+              : 1;
+      _state = nextState.copyWith(hintPath: const []);
+      _bonusCells = _bonusCells.difference({nextState.head});
+      _keyCells = _keyCells.difference({nextState.head});
+      _timeBonusCells = _timeBonusCells.difference({nextState.head});
+      if (usedPortal) {
+        _levelFlavor = context.l10n.isTr ? 'Portal sicramasi' : 'Portal jump';
+      }
       if (collectedBonus) {
         _shields = math.min(2, _shields + 1);
         _levelFlavor = context.l10n.isTr ? 'Kalkan kazandin' : 'Shield gained';
@@ -703,8 +802,24 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             : (context.l10n.isTr ? 'Siradaki kristal' : 'Next crystal');
       }
     });
+    unawaited(ref.read(soundServiceProvider).play(SoundCue.move));
+    if (usedPortal) {
+      HapticFeedback.mediumImpact();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.gate));
+      _showFeedback(
+        context.l10n.isTr ? 'PORTAL' : 'PORTAL',
+        const Color(0xFF7C3AED),
+      );
+    }
     if (collectedBonus || collectedKey || collectedTime || collectedCrystal) {
       HapticFeedback.mediumImpact();
+      unawaited(ref.read(soundServiceProvider).play(
+            collectedKey
+                ? SoundCue.key
+                : collectedCrystal
+                    ? SoundCue.combo
+                    : SoundCue.gate,
+          ));
       _showFeedback(
         collectedKey
             ? (context.l10n.isTr ? 'ANAHTAR!' : 'KEY!')
@@ -717,10 +832,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
     }
     if (hitTrap && !_state.isWon) {
-      _triggerTrap(updated.head);
+      _triggerTrap(nextState.head);
     }
     if (_flowStreak > 0 && _flowStreak % 6 == 0) {
       HapticFeedback.selectionClick();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.combo));
       _showFeedback(
         context.l10n.isTr ? 'AKIS x$_flowStreak' : 'FLOW x$_flowStreak',
         _stageAccent,
@@ -734,6 +850,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final won = _isGoalWin(_state);
     if (won) {
       HapticFeedback.mediumImpact();
+      unawaited(ref.read(soundServiceProvider).play(SoundCue.win));
       final winningState = _state.copyWith(isWon: true);
       final usedHints = _hintsUsed;
       final stars = _starsForWin(winningState.moveCount, usedHints);
@@ -746,8 +863,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 stars: stars,
                 noHint: usedHints == 0,
               );
-      await _addCoins(reward + questReward.coins);
+      final weeklyReward = widget.endless || _state.maze.isCustom
+          ? 0
+          : await ref.read(weeklyEventServiceProvider).recordLevelWin(
+                uid: ref.read(currentUidProvider),
+                stars: stars,
+              );
+      await _addCoins(reward + questReward.coins + weeklyReward);
       ref.invalidate(dailyQuestSnapshotProvider);
+      ref.invalidate(weeklyEventSnapshotProvider);
       if (!mounted) return;
       final l10n = context.l10n;
       final nextLevel = await showDialog<bool>(
@@ -762,8 +886,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             reward: reward,
             coins: _coins,
             questReward: questReward,
+            weeklyReward: weeklyReward,
             perfect: usedHints == 0 &&
-                updated.moveCount == updated.maze.totalCells - 1,
+                winningState.moveCount == winningState.maze.totalCells - 1,
           ),
           actions: [
             TextButton(
@@ -806,6 +931,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           };
           _keyCells = _keyCellsFor(_state.maze, _level);
           _gateCells = _gateCellsFor(_state.maze, _level);
+          _portalPairs = _portalPairsFor(_state.maze, _level);
+          _oneWayCells = _oneWayCellsFor(_state.maze, _level);
           _blastCell = null;
           _blastWaveCells = const {};
           _enemy = (_hasEnemy || _isBossLevel) ? _state.maze.end : null;
@@ -859,6 +986,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       return;
     }
     HapticFeedback.mediumImpact();
+    unawaited(ref.read(soundServiceProvider).play(SoundCue.hint));
     final spendGlobalHint =
         !premiumUnlocked && _hintsLeft <= 0 && totalHints > 0;
     setState(() {
@@ -1033,6 +1161,42 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ));
   }
 
+  String? _liveTutorialText(BuildContext context) {
+    final l10n = context.l10n;
+    if (_level == 1 && _state.moveCount < 2) {
+      return l10n.isTr
+          ? 'Acik karelerin hepsini boya. Turuncu hedefe en son git.'
+          : 'Paint every open tile. Reach the orange target last.';
+    }
+    if (_level == 2 && _keyCells.isNotEmpty) {
+      return l10n.isTr
+          ? 'Once mavi anahtari topla, sonra kilitli cikisa ilerle.'
+          : 'Collect the blue key first, then head to the locked exit.';
+    }
+    if (_level == 3 && _unstableCells.isNotEmpty) {
+      return l10n.isTr
+          ? 'Turuncu bomba yolu acabilir. Zamanlamani iyi yap.'
+          : 'Orange blast tiles can open the route. Time it well.';
+    }
+    if (_level >= 14 && _oneWayCells.containsKey(_state.head)) {
+      return l10n.isTr
+          ? 'Bu kare tek yonlu. Okun gosterdigi yonden cik.'
+          : 'This is a one-way tile. Exit in the arrow direction.';
+    }
+    if (_level >= 18 && _portalPairs.containsKey(_state.head)) {
+      return l10n.isTr
+          ? 'Portal seni rotadaki sonraki guvenli kareye tasir.'
+          : 'The portal jumps you to the next safe route tile.';
+    }
+    final moveLimit = _moveLimit;
+    if (moveLimit != null && moveLimit - _state.moveCount <= 4) {
+      return l10n.isTr
+          ? 'Hamle limitine yaklastin: ${moveLimit - _state.moveCount} hamle kaldi.'
+          : 'Move limit close: ${moveLimit - _state.moveCount} moves left.';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = ref.watch(activeThemeProvider);
@@ -1065,6 +1229,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             cleanseCards: _cleanseCardsLeft,
             flavor: _levelFlavor,
             remainingSeconds: _hasTimer ? _remainingSeconds : null,
+            moveLimit: _moveLimit,
             enemyActive: _hasEnemy || _isBossLevel,
             onHint: _useHint,
             onRewind: _useRewindCard,
@@ -1114,6 +1279,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                             keyCells: _keyCells,
                             gateCells: _gateCells,
                             gatesLocked: _keyCells.isNotEmpty,
+                            portalPairs: _portalPairs,
+                            oneWayCells: _oneWayCells,
                           ),
                         ),
                       ),
@@ -1129,6 +1296,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               text: _feedbackText,
               color: _feedbackColor,
             ),
+          ),
+          Positioned(
+            left: 10,
+            right: 10,
+            bottom: 8,
+            child: _LiveTutorialBubble(text: _liveTutorialText(context)),
           ),
         ],
       );
@@ -1384,6 +1557,65 @@ class _FeedbackBurst extends StatelessWidget {
   }
 }
 
+class _LiveTutorialBubble extends StatelessWidget {
+  final String? text;
+
+  const _LiveTutorialBubble({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return IgnorePointer(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 180),
+        child: text == null
+            ? const SizedBox.shrink()
+            : Container(
+                key: ValueKey(text),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                decoration: BoxDecoration(
+                  color: scheme.surface.withOpacity(0.94),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: scheme.primary.withOpacity(0.18)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.10),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.tips_and_updates_rounded,
+                      size: 18,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        text!,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: scheme.onSurface,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+}
+
 class _MissionPanel extends StatelessWidget {
   final int moves;
   final int progress;
@@ -1398,6 +1630,7 @@ class _MissionPanel extends StatelessWidget {
   final int cleanseCards;
   final String flavor;
   final int? remainingSeconds;
+  final int? moveLimit;
   final bool enemyActive;
   final VoidCallback onHint;
   final VoidCallback onRewind;
@@ -1419,6 +1652,7 @@ class _MissionPanel extends StatelessWidget {
     required this.cleanseCards,
     required this.flavor,
     required this.remainingSeconds,
+    required this.moveLimit,
     required this.enemyActive,
     required this.onHint,
     required this.onRewind,
@@ -1474,6 +1708,26 @@ class _MissionPanel extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
+              if (moveLimit != null) ...[
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.route_rounded,
+                  size: 15,
+                  color: moves >= moveLimit! - 3
+                      ? const Color(0xFFEF4444)
+                      : scheme.primary,
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  '${(moveLimit! - moves).clamp(0, moveLimit!)}',
+                  style: TextStyle(
+                    color: moves >= moveLimit! - 3
+                        ? const Color(0xFFEF4444)
+                        : scheme.primary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -1559,6 +1813,7 @@ class _WinSummary extends StatelessWidget {
   final int reward;
   final int coins;
   final DailyQuestReward questReward;
+  final int weeklyReward;
   final bool perfect;
 
   const _WinSummary({
@@ -1567,6 +1822,7 @@ class _WinSummary extends StatelessWidget {
     required this.reward,
     required this.coins,
     required this.questReward,
+    required this.weeklyReward,
     required this.perfect,
   });
 
@@ -1662,6 +1918,35 @@ class _WinSummary extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       color: scheme.onSurface.withOpacity(0.66),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (weeklyReward > 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEDE9FE),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                    color: const Color(0xFF7C3AED).withOpacity(0.18)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.event_available_rounded,
+                      size: 18, color: Color(0xFF7C3AED)),
+                  const SizedBox(width: 6),
+                  Text(
+                    l10n.isTr
+                        ? 'Haftalik etkinlik +$weeklyReward'
+                        : 'Weekly event +$weeklyReward',
+                    style: const TextStyle(
+                      color: Color(0xFF7C3AED),
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ],

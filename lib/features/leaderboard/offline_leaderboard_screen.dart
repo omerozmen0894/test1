@@ -20,7 +20,8 @@ class OfflineLeaderboardScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F6),
+      backgroundColor:
+          isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F6),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -58,7 +59,8 @@ class OfflineLeaderboardScreen extends ConsumerWidget {
                     child: Text(
                       'İnternet olmadan da çalışır. Aynı cihazdaki tüm oyuncu kayıtları görünür.',
                       style: TextStyle(
-                          fontSize: 12, color: scheme.onSurface.withOpacity(0.6)),
+                          fontSize: 12,
+                          color: scheme.onSurface.withOpacity(0.6)),
                     ),
                   ),
                 ],
@@ -81,7 +83,8 @@ class OfflineLeaderboardScreen extends ConsumerWidget {
                         const SizedBox(height: 12),
                         Text('Henüz kayıt yok',
                             style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
                                 color: scheme.onSurface)),
                         Text('Bölümleri tamamla ve ilk sıraya gir!',
                             style: TextStyle(
@@ -93,12 +96,19 @@ class OfflineLeaderboardScreen extends ConsumerWidget {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   itemCount: scores.length,
                   itemBuilder: (ctx, i) {
                     final score = scores[i];
                     final rank = i + 1;
-                    final medal = rank == 1 ? '🥇' : rank == 2 ? '🥈' : rank == 3 ? '🥉' : null;
+                    final medal = rank == 1
+                        ? '🥇'
+                        : rank == 2
+                            ? '🥈'
+                            : rank == 3
+                                ? '🥉'
+                                : null;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -117,21 +127,26 @@ class OfflineLeaderboardScreen extends ConsumerWidget {
                           SizedBox(
                             width: 40,
                             child: medal != null
-                                ? Text(medal, style: const TextStyle(fontSize: 22))
+                                ? Text(medal,
+                                    style: const TextStyle(fontSize: 22))
                                 : Text('#$rank',
                                     style: TextStyle(
-                                        fontSize: 14, fontWeight: FontWeight.w600,
-                                        color: scheme.onSurface.withOpacity(0.4))),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color:
+                                            scheme.onSurface.withOpacity(0.4))),
                           ),
                           const SizedBox(width: 10),
                           CircleAvatar(
-                            radius: 18, backgroundColor: scheme.primaryContainer,
+                            radius: 18,
+                            backgroundColor: scheme.primaryContainer,
                             child: Text(
                               score.displayName.isNotEmpty
                                   ? score.displayName[0].toUpperCase()
                                   : '?',
                               style: TextStyle(
-                                  fontWeight: FontWeight.w700, color: scheme.primary),
+                                  fontWeight: FontWeight.w700,
+                                  color: scheme.primary),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -141,7 +156,8 @@ class OfflineLeaderboardScreen extends ConsumerWidget {
                               children: [
                                 Text(score.displayName,
                                     style: const TextStyle(
-                                        fontSize: 14, fontWeight: FontWeight.w500),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500),
                                     overflow: TextOverflow.ellipsis),
                                 Text(
                                   DateFormat('d MMM, HH:mm', 'tr_TR')
@@ -158,17 +174,20 @@ class OfflineLeaderboardScreen extends ConsumerWidget {
                             children: [
                               Text('${score.totalCompleted}',
                                   style: TextStyle(
-                                      fontSize: 18, fontWeight: FontWeight.w700,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
                                       color: scheme.primary)),
                               Text('bölüm',
                                   style: TextStyle(
                                       fontSize: 10,
-                                      color: scheme.onSurface.withOpacity(0.4))),
+                                      color:
+                                          scheme.onSurface.withOpacity(0.4))),
                               const SizedBox(height: 2),
                               Text('🔥 ${score.bestStreak}',
                                   style: TextStyle(
                                       fontSize: 11,
-                                      color: scheme.onSurface.withOpacity(0.5))),
+                                      color:
+                                          scheme.onSurface.withOpacity(0.5))),
                             ],
                           ),
                         ],

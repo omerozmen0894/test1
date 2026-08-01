@@ -89,31 +89,30 @@ class EditorNotifier extends ChangeNotifier {
   }
 
   MazeConfig _buildConfig() => MazeConfig(
-    size: size,
-    start: start ?? Cell(0, 0),
-    end: end ?? Cell(size - 1, size - 1),
-    walls: walls.toList(),
-    levelNumber: 0,
-    isCustom: true,
-  );
+        size: size,
+        start: start ?? Cell(0, 0),
+        end: end ?? Cell(size - 1, size - 1),
+        walls: walls.toList(),
+        levelNumber: 0,
+        isCustom: true,
+      );
 
   Future<void> saveLocal() async {
     if (start == null || end == null) return;
     final isar = _isar;
     if (isar == null) return;
-    final level =
-        CustomLevel()
-          ..uid = FirebaseAuth.instance.currentUser?.uid ?? 'local'
-          ..title = title
-          ..size = size
-          ..startJson = jsonEncode(start!.toMap())
-          ..endJson = jsonEncode(end!.toMap())
-          ..wallsJson = jsonEncode(walls.map((w) => w.toMap()).toList())
-          ..createdAt = DateTime.now()
-          ..playCount = 0
-          ..rating = 0
-          ..ratingCount = 0
-          ..isPublished = false;
+    final level = CustomLevel()
+      ..uid = FirebaseAuth.instance.currentUser?.uid ?? 'local'
+      ..title = title
+      ..size = size
+      ..startJson = jsonEncode(start!.toMap())
+      ..endJson = jsonEncode(end!.toMap())
+      ..wallsJson = jsonEncode(walls.map((w) => w.toMap()).toList())
+      ..createdAt = DateTime.now()
+      ..playCount = 0
+      ..rating = 0
+      ..ratingCount = 0
+      ..isPublished = false;
     await isar.writeTxn(() => isar.customLevels.put(level));
   }
 
@@ -189,17 +188,16 @@ class EditorScreen extends ConsumerWidget {
         actions: [
           // Kaydet
           TextButton(
-            onPressed:
-                editor.isValid
-                    ? () async {
-                      await editor.saveLocal();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Kaydedildi!')),
-                        );
-                      }
+            onPressed: editor.isValid
+                ? () async {
+                    await editor.saveLocal();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Kaydedildi!')),
+                      );
                     }
-                    : null,
+                  }
+                : null,
             child: const Text('Kaydet'),
           ),
         ],
@@ -256,10 +254,9 @@ class EditorScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed:
-                        editor.isValid
-                            ? () => _testPlay(context, editor)
-                            : null,
+                    onPressed: editor.isValid
+                        ? () => _testPlay(context, editor)
+                        : null,
                     style: OutlinedButton.styleFrom(
                       minimumSize: Size(0, isTablet ? 54 : 46),
                       shape: RoundedRectangleBorder(
@@ -272,36 +269,34 @@ class EditorScreen extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: FilledButton(
-                    onPressed:
-                        editor.isValid && !editor.isPublishing
-                            ? () async {
-                              await editor.publishToFirebase();
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('🌍 Yayınlandı!'),
-                                  ),
-                                );
-                              }
+                    onPressed: editor.isValid && !editor.isPublishing
+                        ? () async {
+                            await editor.publishToFirebase();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('🌍 Yayınlandı!'),
+                                ),
+                              );
                             }
-                            : null,
+                          }
+                        : null,
                     style: FilledButton.styleFrom(
                       minimumSize: Size(0, isTablet ? 54 : 46),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child:
-                        editor.isPublishing
-                            ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                            : const Text('🌍 Yayınla'),
+                    child: editor.isPublishing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('🌍 Yayınla'),
                   ),
                 ),
               ],
@@ -316,31 +311,30 @@ class EditorScreen extends ConsumerWidget {
     final ctrl = TextEditingController(text: editor.title);
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Labirent Adı'),
-            content: TextField(
-              controller: ctrl,
-              maxLength: 30,
-              decoration: const InputDecoration(hintText: 'Adını gir...'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('İptal'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  if (ctrl.text.trim().isNotEmpty) {
-                    editor.title = ctrl.text.trim();
-                    editor.notifyListeners();
-                  }
-                  Navigator.pop(ctx);
-                },
-                child: const Text('Tamam'),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: const Text('Labirent Adı'),
+        content: TextField(
+          controller: ctrl,
+          maxLength: 30,
+          decoration: const InputDecoration(hintText: 'Adını gir...'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('İptal'),
           ),
+          FilledButton(
+            onPressed: () {
+              if (ctrl.text.trim().isNotEmpty) {
+                editor.title = ctrl.text.trim();
+                editor.notifyListeners();
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -428,19 +422,18 @@ class _EditorGrid extends StatelessWidget {
                 color: color,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child:
-                  label != null
-                      ? Center(
-                        child: Text(
-                          label,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1A1A1A),
-                          ),
+              child: label != null
+                  ? Center(
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1A1A),
                         ),
-                      )
-                      : null,
+                      ),
+                    )
+                  : null,
             );
           },
         ),
@@ -491,10 +484,9 @@ class _SizePicker extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color:
-                          selected
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.surfaceVariant,
+                      color: selected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -502,10 +494,9 @@ class _SizePicker extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color:
-                            selected
-                                ? Theme.of(context).colorScheme.onPrimary
-                                : Theme.of(context).colorScheme.onSurface,
+                        color: selected
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -546,48 +537,44 @@ class _ToolBar extends StatelessWidget {
             vertical: 4,
           ),
           child: Row(
-            children:
-                tools.map((t) {
-                  final selected = t.$1 == tool;
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => onChanged(t.$1),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        margin: const EdgeInsets.only(right: 6),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color:
-                              selected ? scheme.primary : scheme.surfaceVariant,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              t.$2,
-                              size: 18,
-                              color:
-                                  selected
-                                      ? scheme.onPrimary
-                                      : scheme.onSurface.withOpacity(0.6),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              t.$3,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color:
-                                    selected
-                                        ? scheme.onPrimary
-                                        : scheme.onSurface.withOpacity(0.6),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+            children: tools.map((t) {
+              final selected = t.$1 == tool;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onChanged(t.$1),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: selected ? scheme.primary : scheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  );
-                }).toList(),
+                    child: Column(
+                      children: [
+                        Icon(
+                          t.$2,
+                          size: 18,
+                          color: selected
+                              ? scheme.onPrimary
+                              : scheme.onSurface.withOpacity(0.6),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          t.$3,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: selected
+                                ? scheme.onPrimary
+                                : scheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ),
       ),

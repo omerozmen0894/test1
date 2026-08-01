@@ -1,6 +1,7 @@
 // lib/core/models/multiplayer_model.dart
 
 enum RoomStatus { waiting, countdown, playing, finished }
+
 enum PlayerStatus { connected, playing, finished, disconnected }
 
 class MultiplayerRoom {
@@ -36,7 +37,8 @@ class MultiplayerRoom {
           (s) => s.name == (m['status'] ?? 'waiting'),
           orElse: () => RoomStatus.waiting,
         ),
-        mazeData: m['maze'] != null ? Map<String, dynamic>.from(m['maze']) : null,
+        mazeData:
+            m['maze'] != null ? Map<String, dynamic>.from(m['maze']) : null,
         countdownValue: m['countdown'],
         createdAt: m['createdAt'] != null
             ? DateTime.fromMillisecondsSinceEpoch(m['createdAt'])

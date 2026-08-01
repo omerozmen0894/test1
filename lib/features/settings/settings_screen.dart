@@ -5,12 +5,14 @@ import 'package:isar/isar.dart';
 
 import '../../core/database/progress_model.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/models/maze_model.dart';
 import '../../core/models/theme_model.dart';
 import '../../core/providers/isar_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/wallet_service.dart';
 import '../game/game_provider.dart';
+import '../game/maze_painter.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -192,15 +194,16 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               ...AppThemes.all.map(
                 (theme) {
-                  return RadioListTile<String>(
-                    title: Text('${theme.emoji} ${theme.name}'),
-                    value: theme.id,
-                    groupValue: value.themeId,
-                    onChanged: (id) {
-                      if (id != null) {
-                        ref.read(settingsProvider.notifier).setTheme(id);
-                      }
-                    },
+                  final locked = theme.isPremium && !value.premiumUnlocked;
+                  return _ThemePreviewTile(
+                    theme: theme,
+                    selected: value.themeId == theme.id,
+                    locked: locked,
+                    onTap: locked
+                        ? null
+                        : () => ref
+                            .read(settingsProvider.notifier)
+                            .setTheme(theme.id),
                   );
                 },
               ),
@@ -338,6 +341,114 @@ class SettingsScreen extends ConsumerWidget {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 }
+
+class _ThemePreviewTile extends StatelessWidget {
+  final MazeTheme theme;
+  final bool selected;
+  final bool locked;
+  final VoidCallback? onTap;
+
+  const _ThemePreviewTile({
+    required this.theme,
+    required this.selected,
+    required this.locked,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: selected
+            ? scheme.primaryContainer.withOpacity(0.52)
+            : scheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected
+                    ? scheme.primary.withOpacity(0.55)
+                    : scheme.outline.withOpacity(0.12),
+              ),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 62,
+                  height: 62,
+                  child: CustomPaint(
+                    painter: MazePainter(
+                      gameState: GameState.initial(_previewMaze).copyWith(
+                        path: const [
+                          Cell(2, 0),
+                          Cell(1, 0),
+                          Cell(1, 1),
+                          Cell(1, 2),
+                        ],
+                      ),
+                      theme: theme,
+                      isDark: isDark,
+                      pulse: 0.4,
+                      bonusCells: {const Cell(0, 2)},
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        theme.name,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        locked
+                            ? (context.l10n.isTr
+                                ? 'Tema marketinden acilir'
+                                : 'Unlock in theme shop')
+                            : (context.l10n.isTr ? 'Kullanilabilir' : 'Ready'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: scheme.onSurface.withOpacity(0.58),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  locked
+                      ? Icons.lock_rounded
+                      : selected
+                          ? Icons.check_circle_rounded
+                          : Icons.radio_button_unchecked_rounded,
+                  color: selected ? scheme.primary : scheme.outline,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+const _previewMaze = MazeConfig(
+  size: 3,
+  start: Cell(2, 0),
+  end: Cell(0, 2),
+  walls: [],
+  levelNumber: 0,
+);
 
 class _CoinShopCard extends ConsumerWidget {
   static const unlockCost = 250;

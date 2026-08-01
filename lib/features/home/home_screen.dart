@@ -9,6 +9,7 @@ import '../../core/providers/settings_provider.dart';
 import '../../core/services/daily_quest_service.dart';
 import '../../core/services/streak_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/weekly_event_service.dart';
 import '../daily/daily_screen.dart';
 import '../editor/editor_screen.dart';
 import '../game/game_provider.dart';
@@ -16,6 +17,7 @@ import '../game/game_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
 import '../leaderboard/offline_leaderboard_screen.dart';
 import '../multiplayer/multiplayer_screen.dart';
+import '../profile/profile_screen.dart';
 import '../settings/settings_screen.dart';
 import '../streak/streak_screen.dart';
 
@@ -35,6 +37,7 @@ class HomeScreen extends ConsumerWidget {
     final streakAsync = ref.watch(streakDataProvider);
     final streak = streakAsync.valueOrNull;
     final questsAsync = ref.watch(dailyQuestSnapshotProvider);
+    final weeklyAsync = ref.watch(weeklyEventSnapshotProvider);
     final screenSize = MediaQuery.sizeOf(context);
     final isTablet = screenSize.shortestSide >= 600;
 
@@ -141,6 +144,14 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                               );
                             }
+                            if (value == 'profile') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ProfileScreen(),
+                                ),
+                              );
+                            }
                             if (value == 'logout') {
                               await ref
                                   .read(offlineModeProvider.notifier)
@@ -165,6 +176,16 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             ),
                             const PopupMenuDivider(),
+                            PopupMenuItem(
+                              value: 'profile',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.person_outline_rounded),
+                                  const SizedBox(width: 10),
+                                  Text(l10n.isTr ? 'Profil' : 'Profile'),
+                                ],
+                              ),
+                            ),
                             PopupMenuItem(
                               value: 'settings',
                               child: Row(
@@ -252,6 +273,21 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      isTablet ? 32 : 24,
+                      14,
+                      isTablet ? 32 : 24,
+                      0,
+                    ),
+                    child: weeklyAsync.maybeWhen(
+                      data: (snapshot) => _WeeklyEventCard(snapshot: snapshot),
+                      orElse: () => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+
                 // Quick buttons
                 SliverToBoxAdapter(
                   child: Padding(
@@ -270,7 +306,7 @@ class HomeScreen extends ConsumerWidget {
                       childAspectRatio: 1.1,
                       children: [
                         _QuickBtn(
-                          iconText: '\u221E',
+                          icon: Icons.all_inclusive_rounded,
                           label: l10n.t('home_endless'),
                           color: const Color(0xFF0EA5E9).withOpacity(0.14),
                           onTap: () => Navigator.push(
@@ -284,7 +320,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          iconText: '\u{2694}\u{FE0F}',
+                          icon: Icons.sports_martial_arts_rounded,
                           label: l10n.t('home_multiplayer'),
                           color: const Color(0xFFEF4444).withOpacity(0.15),
                           onTap: () => Navigator.push(
@@ -295,7 +331,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          iconText: '17',
+                          icon: Icons.calendar_month_rounded,
                           label: l10n.t('home_daily'),
                           color: const Color(0xFF7C3AED).withOpacity(0.15),
                           onTap: () => Navigator.push(
@@ -306,7 +342,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          iconText: '\u{1F525}',
+                          icon: Icons.local_fire_department_rounded,
                           label: l10n.t('home_streak'),
                           color: const Color(0xFFEA580C).withOpacity(0.15),
                           onTap: () => Navigator.push(
@@ -317,7 +353,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          iconText: '\u{1F3C6}',
+                          icon: Icons.emoji_events_rounded,
                           label: l10n.t('home_leaderboard'),
                           color: scheme.secondaryContainer,
                           onTap: () => Navigator.push(
@@ -328,7 +364,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          iconText: '\u{1F4F1}',
+                          icon: Icons.phone_android_rounded,
                           label: l10n.t('home_local'),
                           color: const Color(0xFF16A34A).withOpacity(0.1),
                           onTap: () => Navigator.push(
@@ -339,7 +375,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         _QuickBtn(
-                          iconText: '\u{270F}\u{FE0F}',
+                          icon: Icons.edit_rounded,
                           label: l10n.t('home_editor'),
                           color: const Color(0xFF7C3AED).withOpacity(0.12),
                           onTap: () => Navigator.push(
@@ -615,6 +651,89 @@ class _DailyQuestCard extends StatelessWidget {
   }
 }
 
+class _WeeklyEventCard extends StatelessWidget {
+  final WeeklyEventSnapshot snapshot;
+
+  const _WeeklyEventCard({required this.snapshot});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF7C3AED).withOpacity(0.15),
+            const Color(0xFF06B6D4).withOpacity(0.10),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF7C3AED).withOpacity(0.16)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.72),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: const Icon(
+              Icons.event_available_rounded,
+              color: Color(0xFF7C3AED),
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.isTr ? snapshot.titleTr : snapshot.titleEn,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    value: snapshot.ratio,
+                    minHeight: 7,
+                    backgroundColor: scheme.surface.withOpacity(0.8),
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFF7C3AED)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${snapshot.progress.clamp(0, snapshot.target).toInt()}/${snapshot.target}',
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+              Text(
+                snapshot.claimed ? 'OK' : '+${snapshot.reward}',
+                style: TextStyle(
+                  color: snapshot.claimed
+                      ? const Color(0xFF22C55E)
+                      : const Color(0xFFF59E0B),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _WorldMap extends StatelessWidget {
   final Set<int> completedSet;
 
@@ -691,7 +810,7 @@ class _ZoneBlock extends StatelessWidget {
               Icon(Icons.map_rounded, size: 18, color: color),
               const SizedBox(width: 6),
               Text(
-                context.l10n.isTr ? '${zone + 1}. Bolge' : 'Zone ${zone + 1}',
+                _zoneName(context, zone),
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   color: scheme.onSurface,
@@ -732,6 +851,36 @@ class _ZoneBlock extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _zoneName(BuildContext context, int zone) {
+    final tr = context.l10n.isTr;
+    final namesTr = [
+      'Baslangic Vadisi',
+      'Kristal Gecidi',
+      'Kum Firtinasi',
+      'Buz Rotasi',
+      'Portal Sehri',
+      'Tuzak Ormani',
+      'Neon Kule',
+      'Golge Labirenti',
+      'Lav Arenasi',
+      'Final Haritasi',
+    ];
+    final namesEn = [
+      'Starter Valley',
+      'Crystal Pass',
+      'Sandstorm',
+      'Ice Route',
+      'Portal City',
+      'Trap Forest',
+      'Neon Tower',
+      'Shadow Maze',
+      'Lava Arena',
+      'Final Map',
+    ];
+    final names = tr ? namesTr : namesEn;
+    return names[zone.clamp(0, names.length - 1).toInt()];
   }
 }
 
@@ -838,7 +987,7 @@ class _SummaryCard extends StatelessWidget {
             '${(count / totalCampaignLevels * 100).round()}%',
           ),
           _div(),
-          _Stat('\u{1F525} ${l10n.t('series')}', '$streak'),
+          _Stat(l10n.t('series'), '$streak'),
         ],
       ),
     );
@@ -887,13 +1036,13 @@ class _Stat extends StatelessWidget {
 // Quick Button
 
 class _QuickBtn extends StatelessWidget {
-  final String iconText;
+  final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
   const _QuickBtn({
-    required this.iconText,
+    required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
@@ -911,7 +1060,7 @@ class _QuickBtn extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(iconText, style: const TextStyle(fontSize: 29)),
+            Icon(icon, size: 31),
             const SizedBox(height: 4),
             Text(
               label,

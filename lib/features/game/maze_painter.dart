@@ -20,6 +20,8 @@ class MazePainter extends CustomPainter {
   final Set<Cell> keyCells;
   final Set<Cell> gateCells;
   final bool gatesLocked;
+  final Map<Cell, Cell> portalPairs;
+  final Map<Cell, Direction> oneWayCells;
 
   const MazePainter({
     required this.gameState,
@@ -37,6 +39,8 @@ class MazePainter extends CustomPainter {
     this.keyCells = const {},
     this.gateCells = const {},
     this.gatesLocked = false,
+    this.portalPairs = const {},
+    this.oneWayCells = const {},
   });
 
   @override
@@ -87,6 +91,8 @@ class MazePainter extends CustomPainter {
     _drawRubbleCells(canvas, cell);
     _drawTrapCells(canvas, cell);
     _drawGateCells(canvas, cell);
+    _drawPortalCells(canvas, cell);
+    _drawOneWayCells(canvas, cell);
     _drawUnstableCells(canvas, cell);
     _drawBlastWave(canvas, cell);
     _drawBlast(canvas, cell);
@@ -277,6 +283,73 @@ class MazePainter extends CustomPainter {
           ..strokeCap = StrokeCap.round
           ..color = Colors.white,
       );
+    }
+  }
+
+  void _drawPortalCells(Canvas canvas, double cell) {
+    for (final c in portalPairs.keys) {
+      if (gameState.inPath(c)) continue;
+      final center = Offset(c.col * cell + cell / 2, c.row * cell + cell / 2);
+      canvas.drawCircle(
+        center,
+        cell * (0.27 + pulse * 0.04),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = cell * 0.055
+          ..color = const Color(0xFF7C3AED).withOpacity(0.9),
+      );
+      canvas.drawCircle(
+        center,
+        cell * 0.15,
+        Paint()..color = const Color(0xFFA78BFA).withOpacity(0.40),
+      );
+      canvas.drawCircle(
+        center,
+        cell * 0.055,
+        Paint()..color = const Color(0xFFFFFFFF).withOpacity(0.9),
+      );
+    }
+  }
+
+  void _drawOneWayCells(Canvas canvas, double cell) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = cell * 0.06
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = const Color(0xFF0EA5E9).withOpacity(0.82);
+    for (final entry in oneWayCells.entries) {
+      final c = entry.key;
+      if (gameState.inPath(c)) continue;
+      final center = Offset(c.col * cell + cell / 2, c.row * cell + cell / 2);
+      final length = cell * 0.24;
+      final dir = entry.value;
+      final end = switch (dir) {
+        Direction.up => center - Offset(0, length),
+        Direction.down => center + Offset(0, length),
+        Direction.left => center - Offset(length, 0),
+        Direction.right => center + Offset(length, 0),
+      };
+      final left = switch (dir) {
+        Direction.up => end + Offset(-cell * 0.09, cell * 0.09),
+        Direction.down => end + Offset(-cell * 0.09, -cell * 0.09),
+        Direction.left => end + Offset(cell * 0.09, -cell * 0.09),
+        Direction.right => end + Offset(-cell * 0.09, -cell * 0.09),
+      };
+      final right = switch (dir) {
+        Direction.up => end + Offset(cell * 0.09, cell * 0.09),
+        Direction.down => end + Offset(cell * 0.09, -cell * 0.09),
+        Direction.left => end + Offset(cell * 0.09, cell * 0.09),
+        Direction.right => end + Offset(-cell * 0.09, cell * 0.09),
+      };
+      canvas.drawCircle(
+        center,
+        cell * 0.25,
+        Paint()..color = const Color(0xFFE0F2FE).withOpacity(0.55),
+      );
+      canvas.drawLine(center, end, paint);
+      canvas.drawLine(end, left, paint);
+      canvas.drawLine(end, right, paint);
     }
   }
 

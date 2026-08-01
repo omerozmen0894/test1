@@ -101,17 +101,16 @@ class _LobbyState extends ConsumerState<MultiplayerLobbyScreen> {
           const SizedBox(height: 8),
           FilledButton.icon(
             onPressed: _loading ? null : _createRoom,
-            icon:
-                _loading
-                    ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                    : const Icon(Icons.add_rounded),
+            icon: _loading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.add_rounded),
             label: const Text('Oda Aç'),
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 52),
@@ -289,9 +288,8 @@ class MultiplayerRoomScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return roomAsync.when(
-      loading:
-          () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('Hata: $e'))),
       data: (room) {
         if (room == null) {
@@ -484,12 +482,12 @@ class _WaitingRoom extends ConsumerWidget {
             // Geri sayım göster
             if (countdown != null)
               Text(
-                    '$countdown',
-                    style: const TextStyle(
-                      fontSize: 72,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  )
+                '$countdown',
+                style: const TextStyle(
+                  fontSize: 72,
+                  fontWeight: FontWeight.w800,
+                ),
+              )
                   .animate(key: ValueKey(countdown))
                   .scale(begin: const Offset(1.5, 1.5), end: const Offset(1, 1))
                   .fadeIn(),
@@ -499,10 +497,8 @@ class _WaitingRoom extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed:
-                      () => ref
-                          .read(multiplayerServiceProvider)
-                          .startGame(roomCode),
+                  onPressed: () =>
+                      ref.read(multiplayerServiceProvider).startGame(roomCode),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(0, 52),
                     shape: RoundedRectangleBorder(
@@ -565,12 +561,12 @@ class _MultiGameState extends ConsumerState<MultiplayerGameScreen> {
   }
 
   MazeConfig _fallbackMaze() => MazeConfig(
-    size: 5,
-    start: const Cell(0, 0),
-    end: const Cell(4, 4),
-    walls: const [],
-    levelNumber: 0,
-  );
+        size: 5,
+        start: const Cell(0, 0),
+        end: const Cell(4, 4),
+        walls: const [],
+        levelNumber: 0,
+      );
 
   void _move(Direction dir) {
     final target = _gameState.head.offset(dir.dr, dir.dc);
@@ -579,9 +575,7 @@ class _MultiGameState extends ConsumerState<MultiplayerGameScreen> {
     setState(() => _gameState = newState);
 
     // Firebase'e gönder
-    ref
-        .read(multiplayerServiceProvider)
-        .updatePath(
+    ref.read(multiplayerServiceProvider).updatePath(
           widget.room.roomCode,
           _gameState.path,
           _gameState.moveCount,
@@ -601,9 +595,8 @@ class _MultiGameState extends ConsumerState<MultiplayerGameScreen> {
     final room = roomAsync.valueOrNull ?? widget.room;
     final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
 
-    final players =
-        room.players.values.toList()
-          ..sort((a, b) => b.path.length.compareTo(a.path.length));
+    final players = room.players.values.toList()
+      ..sort((a, b) => b.path.length.compareTo(a.path.length));
 
     return Scaffold(
       backgroundColor:
@@ -680,41 +673,10 @@ class _MultiGameState extends ConsumerState<MultiplayerGameScreen> {
                     child: SizedBox(
                       width: size,
                       height: size,
-                      child:
-                          _gameState.isWon
-                              ? Stack(
-                                children: [
-                                  CustomPaint(
-                                    size: Size(size, size),
-                                    painter: MazePainter(
-                                      gameState: _gameState,
-                                      theme: theme,
-                                      isDark: isDark,
-                                    ),
-                                  ),
-                                  Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(24),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.7),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: const Text(
-                                        '🏆\nTebrikler!',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 24,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )
-                              : MazeGestureHandler(
-                                onMove: _move,
-                                child: CustomPaint(
+                      child: _gameState.isWon
+                          ? Stack(
+                              children: [
+                                CustomPaint(
                                   size: Size(size, size),
                                   painter: MazePainter(
                                     gameState: _gameState,
@@ -722,7 +684,37 @@ class _MultiGameState extends ConsumerState<MultiplayerGameScreen> {
                                     isDark: isDark,
                                   ),
                                 ),
+                                Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(24),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.7),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: const Text(
+                                      '🏆\nTebrikler!',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : MazeGestureHandler(
+                              onMove: _move,
+                              child: CustomPaint(
+                                size: Size(size, size),
+                                painter: MazePainter(
+                                  gameState: _gameState,
+                                  theme: theme,
+                                  isDark: isDark,
+                                ),
                               ),
+                            ),
                     ),
                   );
                 },
@@ -742,12 +734,11 @@ class _MultiGameState extends ConsumerState<MultiplayerGameScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed:
-                            _gameState.history.isNotEmpty
-                                ? () => setState(
+                        onPressed: _gameState.history.isNotEmpty
+                            ? () => setState(
                                   () => _gameState = _gameState.undo()!,
                                 )
-                                : null,
+                            : null,
                         icon: const Icon(Icons.undo_rounded, size: 16),
                         label: const Text('Geri Al'),
                         style: OutlinedButton.styleFrom(
@@ -761,10 +752,9 @@ class _MultiGameState extends ConsumerState<MultiplayerGameScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed:
-                            () => setState(
-                              () => _gameState = GameState.initial(_maze),
-                            ),
+                        onPressed: () => setState(
+                          () => _gameState = GameState.initial(_maze),
+                        ),
                         icon: const Icon(Icons.refresh_rounded, size: 16),
                         label: const Text('Yeniden'),
                         style: OutlinedButton.styleFrom(

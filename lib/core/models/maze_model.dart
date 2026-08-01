@@ -1,11 +1,14 @@
 // lib/core/models/maze_model.dart
 
 enum CellType { empty, wall, start, end }
+
 enum Direction { up, down, left, right }
 
 extension DirectionExt on Direction {
-  int get dr => switch (this) { Direction.up => -1, Direction.down => 1, _ => 0 };
-  int get dc => switch (this) { Direction.left => -1, Direction.right => 1, _ => 0 };
+  int get dr =>
+      switch (this) { Direction.up => -1, Direction.down => 1, _ => 0 };
+  int get dc =>
+      switch (this) { Direction.left => -1, Direction.right => 1, _ => 0 };
 }
 
 class Cell {
@@ -14,7 +17,8 @@ class Cell {
   const Cell(this.row, this.col);
 
   @override
-  bool operator ==(Object other) => other is Cell && other.row == row && other.col == col;
+  bool operator ==(Object other) =>
+      other is Cell && other.row == row && other.col == col;
   @override
   int get hashCode => row * 1000 + col;
   Cell offset(int dr, int dc) => Cell(row + dr, col + dc);
@@ -91,8 +95,11 @@ class GameState {
   });
 
   factory GameState.initial(MazeConfig maze) => GameState(
-        maze: maze, path: [maze.start],
-        moveCount: 0, isWon: false, history: const [],
+        maze: maze,
+        path: [maze.start],
+        moveCount: 0,
+        isWon: false,
+        history: const [],
       );
 
   Cell get head => path.last;
@@ -113,27 +120,45 @@ class GameState {
       return copyWith(
         path: [...path]..removeLast(),
         moveCount: moveCount + 1,
-        history: [...history, [...path]],
+        history: [
+          ...history,
+          [...path]
+        ],
       );
     }
     if (inPath(target)) return null;
     final newPath = [...path, target];
     final won = target == maze.end && newPath.length == maze.totalCells;
-    return copyWith(path: newPath, moveCount: moveCount + 1, isWon: won,
-        history: [...history, [...path]]);
+    return copyWith(
+        path: newPath,
+        moveCount: moveCount + 1,
+        isWon: won,
+        history: [
+          ...history,
+          [...path]
+        ]);
   }
 
   GameState? undo() {
     if (history.isEmpty) return null;
-    return copyWith(path: history.last, history: history.sublist(0, history.length - 1));
+    return copyWith(
+        path: history.last, history: history.sublist(0, history.length - 1));
   }
 
   GameState copyWith({
-    MazeConfig? maze, List<Cell>? path, int? moveCount,
-    bool? isWon, List<List<Cell>>? history, List<Cell>? hintPath,
-  }) => GameState(
-    maze: maze ?? this.maze, path: path ?? this.path,
-    moveCount: moveCount ?? this.moveCount, isWon: isWon ?? this.isWon,
-    history: history ?? this.history, hintPath: hintPath ?? this.hintPath,
-  );
+    MazeConfig? maze,
+    List<Cell>? path,
+    int? moveCount,
+    bool? isWon,
+    List<List<Cell>>? history,
+    List<Cell>? hintPath,
+  }) =>
+      GameState(
+        maze: maze ?? this.maze,
+        path: path ?? this.path,
+        moveCount: moveCount ?? this.moveCount,
+        isWon: isWon ?? this.isWon,
+        history: history ?? this.history,
+        hintPath: hintPath ?? this.hintPath,
+      );
 }
