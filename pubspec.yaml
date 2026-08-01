@@ -1,7 +1,7 @@
 name: wrap_maze
 description: Wrap Maze - Tam ozellikli labirent bulmaca oyunu
 publish_to: 'none'
-version: 1.2.0+63
+version: 1.2.1+64
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
