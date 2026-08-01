@@ -7,12 +7,11 @@ import '../../core/providers/isar_provider.dart';
 import '../../core/services/auth_service.dart';
 
 const _completedLevelsPrefsPrefix = 'wrapMaze.completedLevels.v1';
+const _deviceCompletedLevelsPrefsKey = 'wrapMaze.completedLevels.device.v1';
 
 String _completedLevelsKey(String uid) => '$_completedLevelsPrefsPrefix.$uid';
 
-Future<List<int>> _loadCompletedLevelNumbers(String uid) async {
-  final prefs = await SharedPreferences.getInstance();
-  final raw = prefs.getStringList(_completedLevelsKey(uid)) ?? const [];
+List<int> _parseCompletedLevels(List<String> raw) {
   final levels = raw
       .map(int.tryParse)
       .whereType<int>()
@@ -20,6 +19,18 @@ Future<List<int>> _loadCompletedLevelNumbers(String uid) async {
       .toSet()
       .toList()
     ..sort();
+  return levels;
+}
+
+Future<List<int>> _loadCompletedLevelNumbers(String uid) async {
+  final prefs = await SharedPreferences.getInstance();
+  final userLevels = _parseCompletedLevels(
+    prefs.getStringList(_completedLevelsKey(uid)) ?? const [],
+  );
+  final deviceLevels = _parseCompletedLevels(
+    prefs.getStringList(_deviceCompletedLevelsPrefsKey) ?? const [],
+  );
+  final levels = {...userLevels, ...deviceLevels}.toList()..sort();
   return levels;
 }
 
@@ -32,15 +43,29 @@ Future<void> saveCompletedLevelFallback({
   final levels = (await _loadCompletedLevelNumbers(uid)).toSet()
     ..add(levelNumber);
   final values = levels.toList()..sort();
-  await prefs.setStringList(
-    _completedLevelsKey(uid),
-    values.map((level) => level.toString()).toList(),
-  );
+  final encoded = values.map((level) => level.toString()).toList();
+  await Future.wait([
+    prefs.setStringList(_completedLevelsKey(uid), encoded),
+    prefs.setStringList(_deviceCompletedLevelsPrefsKey, encoded),
+  ]);
 }
 
 Future<void> deleteCompletedLevelFallback(String uid) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.remove(_completedLevelsKey(uid));
+}
+
+Future<void> deleteAllCompletedLevelFallback() async {
+  final prefs = await SharedPreferences.getInstance();
+  final keys = prefs
+      .getKeys()
+      .where((key) =>
+          key.startsWith('$_completedLevelsPrefsPrefix.') ||
+          key == _deviceCompletedLevelsPrefsKey)
+      .toList();
+  for (final key in keys) {
+    await prefs.remove(key);
+  }
 }
 
 LevelProgress _fallbackProgress(String uid, int levelNumber) {
@@ -62,7 +87,8 @@ List<LevelProgress> _mergeProgress(
     ..sort((a, b) => a.levelNumber.compareTo(b.levelNumber));
 }
 
-final completedLevelsProvider = StreamProvider<List<LevelProgress>>((ref) async* {
+final completedLevelsProvider =
+    StreamProvider<List<LevelProgress>>((ref) async* {
   final isar = ref.watch(isarProvider);
   final uid = ref.watch(currentUidProvider);
   final fallbackLevels = await _loadCompletedLevelNumbers(uid);

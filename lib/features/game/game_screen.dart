@@ -1964,10 +1964,10 @@ class _TutorialSheet extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     return FractionallySizedBox(
-      heightFactor: 0.9,
+      heightFactor: 0.82,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 4, 22, 14),
+          padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -1989,9 +1989,9 @@ class _TutorialSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               const _TutorialDemo(),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -2021,11 +2021,14 @@ class _TutorialSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               FilledButton.icon(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.play_arrow_rounded),
-                label: Text(context.l10n.t('start')),
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(context.l10n.t('start')),
+                ),
               ),
             ],
           ),
@@ -2100,8 +2103,8 @@ class _TutorialDemoState extends State<_TutorialDemo> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: SizedBox(
-        width: 190,
-        height: 190,
+        width: 140,
+        height: 140,
         child: CustomPaint(
           painter: MazePainter(
             gameState: state,

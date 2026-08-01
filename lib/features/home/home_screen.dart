@@ -30,6 +30,7 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(authStateProvider).valueOrNull;
     final completed = completedAsync.valueOrNull ?? [];
     final completedSet = {for (final p in completed) p.levelNumber};
+    final nextLevel = _nextPlayableLevel(completedSet);
     final streakAsync = ref.watch(streakDataProvider);
     final streak = streakAsync.valueOrNull;
     final screenSize = MediaQuery.sizeOf(context);
@@ -219,6 +220,21 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      isTablet ? 32 : 24,
+                      14,
+                      isTablet ? 32 : 24,
+                      0,
+                    ),
+                    child: _ContinueLevelButton(
+                      level: nextLevel,
+                      allDone: completedSet.length >= totalCampaignLevels,
+                    ),
+                  ),
+                ),
+
                 // Quick buttons
                 SliverToBoxAdapter(
                   child: Padding(
@@ -365,6 +381,88 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
+
+  int _nextPlayableLevel(Set<int> completedSet) {
+    for (var level = 1; level <= totalCampaignLevels; level++) {
+      if (!completedSet.contains(level)) return level;
+    }
+    return totalCampaignLevels;
+  }
+}
+
+class _ContinueLevelButton extends StatelessWidget {
+  final int level;
+  final bool allDone;
+
+  const _ContinueLevelButton({
+    required this.level,
+    required this.allDone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    return Material(
+      color: scheme.primary,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 0,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => GameScreen(level: level)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.play_arrow_rounded,
+                    color: Colors.white, size: 30),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      allDone
+                          ? l10n.t('all_levels_done')
+                          : l10n.t('continue_level'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      allDone
+                          ? l10n.t('replay_final_level')
+                          : l10n.level(level),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.78),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded,
+                  color: Colors.white, size: 30),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _WorldMap extends StatelessWidget {
@@ -376,7 +474,7 @@ class _WorldMap extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
-    final columns = 5;
+    const columns = 5;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 20),
       child: Center(
