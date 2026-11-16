@@ -1,6 +1,6 @@
 // lib/core/services/offline_leaderboard_service.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../database/progress_model.dart';
 import '../providers/isar_provider.dart';
 

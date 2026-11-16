@@ -78,7 +78,7 @@ const LevelProgressSchema = CollectionSchema(
   getId: _levelProgressGetId,
   getLinks: _levelProgressGetLinks,
   attach: _levelProgressAttach,
-  version: '3.1.0+1',
+  version: '3.2.1',
 );
 
 int _levelProgressEstimateSize(
@@ -1231,7 +1231,7 @@ const DailyRecordSchema = CollectionSchema(
   getId: _dailyRecordGetId,
   getLinks: _dailyRecordGetLinks,
   attach: _dailyRecordAttach,
-  version: '3.1.0+1',
+  version: '3.2.1',
 );
 
 int _dailyRecordEstimateSize(
@@ -2386,7 +2386,7 @@ const StreakRecordSchema = CollectionSchema(
   getId: _streakRecordGetId,
   getLinks: _streakRecordGetLinks,
   attach: _streakRecordAttach,
-  version: '3.1.0+1',
+  version: '3.2.1',
 );
 
 int _streakRecordEstimateSize(
@@ -3924,7 +3924,7 @@ const CustomLevelSchema = CollectionSchema(
   getId: _customLevelGetId,
   getLinks: _customLevelGetLinks,
   attach: _customLevelAttach,
-  version: '3.1.0+1',
+  version: '3.2.1',
 );
 
 int _customLevelEstimateSize(
@@ -5693,7 +5693,7 @@ const AppSettingsSchema = CollectionSchema(
   getId: _appSettingsGetId,
   getLinks: _appSettingsGetLinks,
   attach: _appSettingsAttach,
-  version: '3.1.0+1',
+  version: '3.2.1',
 );
 
 int _appSettingsEstimateSize(
@@ -6896,7 +6896,7 @@ const OfflineScoreSchema = CollectionSchema(
   getId: _offlineScoreGetId,
   getLinks: _offlineScoreGetLinks,
   attach: _offlineScoreAttach,
-  version: '3.1.0+1',
+  version: '3.2.1',
 );
 
 int _offlineScoreEstimateSize(

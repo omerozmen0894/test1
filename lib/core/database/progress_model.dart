@@ -1,5 +1,5 @@
 // lib/core/database/progress_model.dart
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 part 'progress_model.g.dart';
 
